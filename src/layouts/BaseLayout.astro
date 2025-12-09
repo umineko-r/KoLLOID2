@@ -1,0 +1,147 @@
+---
+// src/layouts/BaseLayout.astro
+
+interface Props {
+  pageTitle?: string;
+  subtitle?: string;
+  showCanvas?: boolean;
+}
+
+const {
+  pageTitle = "KoLLOID",
+  subtitle = "とけない個のための表現空間",
+  showCanvas = true,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>{pageTitle}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* 粒子背景用の p5.js（ホームで使う用） */}
+    {showCanvas && (
+      <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+    )}
+
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f7f5f2;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: #333;
+      }
+
+      header.site-header {
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      .site-title-link {
+        text-decoration: none;
+        color: #222;
+      }
+
+      .site-title {
+        margin: 0;
+        font-size: 1.2rem;
+        letter-spacing: 0.15em;
+        transition: color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      .site-title-link:hover .site-title {
+        color: #777;
+        opacity: 0.85;
+        transform: translateY(-1px);
+      }
+
+      nav.site-nav a {
+        text-decoration: none;
+        color: #666;
+        font-size: 0.9rem;
+        margin-left: 1rem;
+        position: relative;
+      }
+
+      nav.site-nav a:hover {
+        color: #333;
+      }
+
+      nav.site-nav a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -0.2rem;
+        width: 0;
+        height: 1px;
+        background: #999;
+        transition: width 0.2s ease;
+      }
+
+      nav.site-nav a:hover::after {
+        width: 100%;
+      }
+
+      main.page-main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+        text-align: center;
+      }
+
+      @media (max-width: 600px) {
+        header.site-header {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        nav.site-nav a {
+          margin-left: 0.6rem;
+        }
+      }
+
+      /* 背景キャンバス用 */
+      #canvas-container {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+      }
+    </style>
+  </head>
+
+  <body>
+    {showCanvas && <div id="canvas-container"></div>}
+
+    <header class="site-header">
+      <a href="/" class="site-title-link">
+        <h1 class="site-title">KoLLOID</h1>
+      </a>
+      <nav class="site-nav">
+        <a href="/about">About</a>
+        {/* 将来ここに /updates などを追加 */}
+        {/* <a href="/updates">Updates</a> */}
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <slot />
+    </main>
+
+    {showCanvas && (
+    <script type="module" is:inline>
+        import { createKolloidSketch } from "/js/kolloid-particles.js";
+
+        window.addEventListener("DOMContentLoaded", () => {
+        new p5(createKolloidSketch());
+        });
+    </script>
+    )}
+  </body>
+</html>
