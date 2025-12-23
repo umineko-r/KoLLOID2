@@ -1,0 +1,200 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+/* ブラウザ（タブ）に表示されるタイトル */
+const pageTitle = "Statement | KoLLOID";
+
+/* ページ内に表示されるタイトル */
+const displayTitle = "KoLLOIDをKoLLOIDとして維持するために";
+const subtitle = "― 一見さんお断りのカタログサイト ―";
+---
+
+<BaseLayout pageTitle={pageTitle} showCanvas={false}>
+  <article class="statement">
+    <header class="statement-header">
+      <h2 class="statement-title">{displayTitle}</h2>
+      <p class="statement-subtitle">{subtitle}</p>
+    </header>
+
+    <p>
+      KoLLOID は、<br />
+      表現を評価しません。<br />
+      競争させません。<br />
+      編集しません。<br />
+      KoLLOID が目指しているのは、<br />
+      「良い表現」を集めることでも、<br />
+      「正しい意見」を揃えることでもありません。<br />
+      誰かが何かを表現したいと思ったときに、<br />
+      技量や影響力を度外視して、<br />
+      ただ自分のために表現に取り組める余地を<br />
+      失わせないこと。<br />
+      それが、KoLLOID にとっての成功です。
+    </p>
+
+    <hr />
+
+    <h3>形態について</h3>
+    <p>
+      KoLLOID は雑多なマガジンではなく、<br />
+      タイトル・制作者・ジャンルのみが並ぶカタログです。<br />
+      表現の中身については、すべて制作者に一任されます。<br />
+      KoLLOID は内容を要約せず、推薦せず、編集しません。<br />
+      クオリティは担保されません。<br />
+      その代わり、表現の主権は常に制作者にあります。
+    </p>
+
+    <hr />
+
+    <h3>参加について</h3>
+    <p>
+      KoLLOID は、誰でも参加できる場ではありません。<br />
+      いわゆる「一見さんお断り」の場です。<br />
+      ただし、選別の基準は<br />
+      表現の内容や思想的立場ではなく、<br />
+      人物として信頼できるかどうかに置かれます。<br />
+      これは排除のためではなく、<br />
+      比較・競争・検閲を最小限に抑えるための設計です。
+    </p>
+
+    <hr />
+
+    <h3>編集・検閲について</h3>
+    <p>
+      KoLLOID は原則として内部検閲を行いません。<br />
+      ただし、以下の表現については<br />
+      KoLLOID のルールに反すると判断します。
+    </p>
+
+    <ul>
+      <li>
+        反論や自己防衛の回路を持たない個人に対する、<br />
+        誹謗中傷・人格否定・吊し上げ的表現
+      </li>
+      <li>社会の安全に対して明らかな敵意をもつ表現</li>
+      <li>世界平和に明らかに逆行する表現</li>
+      <li>「個」の尊厳を脅かす差別的表現</li>
+    </ul>
+
+    <p>
+      これらに該当すると判断された場合、<br />
+      その制作者には KoLLOID から退去していただきます。<br />
+      表現の修正要求や思想の矯正は行いません。<br />
+      ここは「そういう場ではない」という線引きのみを行います。
+    </p>
+
+    <hr />
+
+    <h3>読む側について</h3>
+    <p>
+      KoLLOID は、安全な場所ではありません。<br />
+      不快な表現や、納得できない表現に<br />
+      出会うこともあります。<br />
+      その責任は、原則として制作者にあります。<br />
+      KoLLOID は、<br />
+      読む側の感情を理由に<br />
+      表現を排除する場ではありません。
+    </p>
+
+    <hr />
+
+    <h3>政治・社会的トピックにおける KoLLOID の立場</h3>
+    <p>
+      KoLLOID は中立を主張しません。<br />
+      また、特定の政治的・社会的立場を<br />
+      支持・否定する場でもありません。<br />
+      KoLLOID の原則に従う限り、<br />
+      どのような政治的・社会的立場の表現も並び得ます。<br />
+      政治や社会的トピックについて<br />
+      ジャンル分けを行わないのは、<br />
+      立場が固定化され、価値に変換されることを<br />
+      避けるためです。<br />
+      場に多少の傾きが生じることは否定しません。<br />
+      ただし、その傾きが<br />
+      特定の立場の優遇や、<br />
+      別の立場の排除につながることは拒否します。
+    </p>
+
+    <hr />
+
+    <h3>最後に</h3>
+    <p>
+      KoLLOID には、たった一つの原則があります。<br />
+      見たいものを入れるのは構いません。<br />
+      見たくないものを除外することは認めません。<br />
+      KoLLOID は、<br />
+      誰かのための正解ではなく、<br />
+      まず「私が息をするため」に置かれたカタログです。<br />
+      同じ呼吸ができる人が、<br />
+      たまたま並んでいるだけです。<br />
+      それ以上のことは行いません。
+    </p>
+
+    <p class="statement-sign">
+      2025年12月23日<br />
+      KoLLOID主宰 ウミネコ
+    </p>
+  </article>
+
+  <style>
+    .statement {
+      text-align: left;
+      line-height: 1.95;
+      margin: 0 auto;
+      max-width: 760px;
+    }
+
+    .statement-header {
+      margin-bottom: 1.8rem;
+    }
+
+    .statement-title {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.03em;
+    }
+
+    .statement-subtitle {
+      margin: 0.5rem 0 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    h3 {
+      margin-top: 1.8rem;
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+      margin: 1.8rem 0;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+      margin: 0.8rem 0 1.2rem;
+    }
+
+    li {
+      margin: 0.5rem 0;
+    }
+
+    /* 署名を右寄せ */
+    .statement-sign {
+      margin-top: 3rem;
+      color: #666;
+      font-size: 0.95rem;
+      text-align: right;
+    }
+
+    @media (max-width: 600px) {
+      .statement-title {
+        font-size: 1.25rem;
+      }
+      .statement-subtitle {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</BaseLayout>
