@@ -12,7 +12,7 @@ const {
   pageTitle = "KoLLOID",
   subtitle = "とけない個のための表現空間",
   showCanvas = true,
-  enableLinks = false
+  enableLinks = false,
 } = Astro.props;
 ---
 
@@ -25,9 +25,9 @@ const {
 
     <!-- favicon（タブ・ブックマーク用） -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v2.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v2.png" />
 
-    {/* 粒子背景用の p5.js（ホームで使う用） */}
+    {/* 粒子背景用の p5.js */}
     {showCanvas && (
       <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
     )}
@@ -76,7 +76,6 @@ const {
         transform: translateY(-1px);
       }
 
-      /* 右上About */
       nav.site-nav {
         position: absolute;
         right: 1.5rem;
@@ -165,18 +164,22 @@ const {
     </style>
   </head>
 
-  <body>
+  <body
+    data-show-canvas={showCanvas}
+    data-enable-links={enableLinks}
+  >
     {showCanvas && <div id="canvas-container"></div>}
 
     <header class="site-header">
       <a href="/" class="site-title-link" aria-label="KoLLOID">
         <img class="site-logo" src="/logo.png" alt="KoLLOID" />
       </a>
+
       <nav class="site-nav">
         <a href="/about">About</a>
         <a href="/statement">Statement</a>
-        {/* 将来ここに /updates などを追加 */}
-        {/* <a href="/updates">Updates</a> */}
+        {/* 将来ここに /contributors などを追加 */}
+        {/* <a href="/contributors">Contributors</a> */}
       </nav>
     </header>
 
@@ -189,13 +192,19 @@ const {
     </footer>
 
     {showCanvas && (
-    <script type="module" is:inline>
-      import { createKolloidSketch } from "/js/kolloid-particles.js";
+      <script type="module" is:inline>
+        import { createKolloidSketch } from "/js/kolloid-particles.js";
 
-      window.addEventListener("DOMContentLoaded", () => {
-        new p5(createKolloidSketch({ enableLinks: {enableLinks} }));
-      });
-    </script>
+        const root = document.body;
+        const showCanvas = root.dataset.showCanvas === "true";
+        const enableLinks = root.dataset.enableLinks === "true";
+
+        if (showCanvas) {
+          window.addEventListener("DOMContentLoaded", () => {
+            new p5(createKolloidSketch({ enableLinks }));
+          });
+        }
+      </script>
     )}
   </body>
 </html>
