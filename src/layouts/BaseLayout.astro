@@ -5,12 +5,14 @@ interface Props {
   pageTitle?: string;
   subtitle?: string;
   showCanvas?: boolean;
+  enableLinks?: boolean;
 }
 
 const {
   pageTitle = "KoLLOID",
   subtitle = "とけない個のための表現空間",
   showCanvas = true,
+  enableLinks = false
 } = Astro.props;
 ---
 
@@ -152,7 +154,7 @@ const {
         inset: 0;
         z-index: -1;
       }
-      
+
       .site-footer {
         margin-top: 3rem;
         padding: 1.5rem 0 2rem;
@@ -188,11 +190,11 @@ const {
 
     {showCanvas && (
     <script type="module" is:inline>
-        import { createKolloidSketch } from "/js/kolloid-particles.js";
+      import { createKolloidSketch } from "/js/kolloid-particles.js";
 
-        window.addEventListener("DOMContentLoaded", () => {
-        new p5(createKolloidSketch());
-        });
+      window.addEventListener("DOMContentLoaded", () => {
+        new p5(createKolloidSketch({ enableLinks: {enableLinks} }));
+      });
     </script>
     )}
   </body>

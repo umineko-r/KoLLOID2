@@ -1,5 +1,7 @@
 // public/js/kolloid-particles.js
 // 更新情報JSONを読み込み、粒子として表示する版（自動cap対応）
+// - enableLinks=true: JSON粒子（リンク/hoverあり）
+// - enableLinks=false: ダミー粒子（リンク/hoverなし）
 
 function toDate(value) {
   if (!value) return null;
@@ -19,15 +21,6 @@ function clamp(x, min, max) {
   return Math.max(min, Math.min(max, x));
 }
 
-/**
- * 選抜ルール:
- * - 表示枠 K のうち 新しめ30% + ランダム70%
- * - ランダム枠の制作者上限 C は自動計算:
- *     C = clamp(floor((K*0.7) / M), 2, 5)
- *     M = contributors数
- * - Instagram は1アカウント最大5投稿
- * - UI上では新旧を区別しない（最後に混ぜる）
- */
 function selectItems(allItems, opts) {
   const {
     totalCount,
@@ -91,10 +84,7 @@ function selectItems(allItems, opts) {
       ? recentPool
       : sortedByNew.slice(0, Math.ceil(totalCount * 0.5));
 
-  const newCount = Math.min(
-    newPool.length,
-    Math.round(totalCount * newRatio)
-  );
+  const newCount = Math.min(newPool.length, Math.round(totalCount * newRatio));
 
   const newPicked = shuffle([...newPool]).slice(0, newCount);
   const pickedKeys = new Set(newPicked.map((x) => x._key));
@@ -102,12 +92,8 @@ function selectItems(allItems, opts) {
   const remaining = items.filter((x) => !pickedKeys.has(x._key));
   const randomCount = Math.max(0, totalCount - newPicked.length);
 
-  // ★ 自動 cap 計算（ここが今回の肝）
-  const autoCap = clamp(
-    Math.floor(randomCount / contributors),
-    2,
-    5
-  );
+  // ★ 自動 cap 計算
+  const autoCap = clamp(Math.floor(randomCount / contributors), 2, 5);
 
   function pickWithCap(candidates, want, cap) {
     const counts = new Map();
@@ -127,7 +113,7 @@ function selectItems(allItems, opts) {
 
   let randomPicked = pickWithCap(remaining, randomCount, autoCap);
 
-  // 足りない場合は段階的に緩める（場を埋めるため）
+  // 足りない場合は緩める（場を埋める）
   if (randomPicked.length < randomCount) {
     for (const extra of [1, 2, 9999]) {
       const cap = autoCap + extra;
@@ -144,7 +130,6 @@ function selectItems(allItems, opts) {
   return final;
 }
 
-// 端末ごとの表示粒子数
 function targetCount() {
   const w = window.innerWidth;
   if (w <= 600) return 32;
@@ -152,7 +137,9 @@ function targetCount() {
   return 56;
 }
 
-export function createKolloidSketch() {
+export function createKolloidSketch(options = {}) {
+  const { enableLinks = false } = options;
+
   return (p) => {
     const particles = [];
     let items = [];
@@ -160,7 +147,7 @@ export function createKolloidSketch() {
 
     class Particle {
       constructor(item) {
-        this.item = item;
+        this.item = item; // item=null の場合はダミー粒子
         this.reset(true);
       }
 
@@ -231,10 +218,19 @@ export function createKolloidSketch() {
     async function loadItems() {
       const res = await fetch("/data/particles.json", { cache: "no-store" });
       if (!res.ok) throw new Error("particles.json fetch failed");
-      return await res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     }
 
-    function rebuildParticles() {
+    function buildDummyParticles() {
+      particles.length = 0;
+      const count = targetCount();
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(null));
+      }
+    }
+
+    function rebuildDataParticles() {
       particles.length = 0;
       const selected = selectItems(items, {
         totalCount: targetCount(),
@@ -246,23 +242,33 @@ export function createKolloidSketch() {
     }
 
     function drawTooltip(it) {
+      if (!it) return;
+
       p.push();
       p.textAlign(p.LEFT, p.TOP);
       p.textSize(12);
+
       const pad = 10;
-      const w =
-        Math.max(p.textWidth(it.title), p.textWidth(it.creator)) + pad * 2;
+      const line1 = it.title ?? "";
+      const line2 = it.creator ?? "";
+
+      const w = Math.max(p.textWidth(line1), p.textWidth(line2)) + pad * 2;
       const h = pad * 2 + 30;
+
       let x = p.mouseX + 14;
       let y = p.mouseY + 14;
       if (x + w > p.width) x = p.width - w - 10;
       if (y + h > p.height) y = p.height - h - 10;
+
       p.fill(255, 255, 255, 230);
       p.rect(x, y, w, h, 10);
+
       p.fill(40);
-      p.text(it.title, x + pad, y + pad);
+      p.text(line1, x + pad, y + pad);
+
       p.fill(90);
-      p.text(it.creator, x + pad, y + pad + 16);
+      p.text(line2, x + pad, y + pad + 16);
+
       p.pop();
     }
 
@@ -271,20 +277,39 @@ export function createKolloidSketch() {
       const canvas = p.createCanvas(window.innerWidth, window.innerHeight);
       canvas.parent(container);
       p.frameRate(30);
-      loadItems()
-        .then((data) => {
-          items = data;
-          rebuildParticles();
-        })
-        .catch(console.error);
+
+      if (enableLinks) {
+        loadItems()
+          .then((data) => {
+            items = data;
+            rebuildDataParticles();
+          })
+          .catch((e) => {
+            console.error(e);
+            buildDummyParticles(); // 失敗時はダミーで埋める
+          });
+      } else {
+        buildDummyParticles();
+      }
     };
 
     p.windowResized = () => {
       p.resizeCanvas(window.innerWidth, window.innerHeight);
-      rebuildParticles();
+      // ページ種別に応じて再構築
+      if (enableLinks) {
+        rebuildDataParticles();
+      } else {
+        buildDummyParticles();
+      }
     };
 
     p.mouseMoved = () => {
+      if (!enableLinks) {
+        hovered = null;
+        p.cursor("default");
+        return;
+      }
+
       hovered = null;
       for (let i = particles.length - 1; i >= 0; i--) {
         if (particles[i].hitTest(p.mouseX, p.mouseY)) {
@@ -292,21 +317,24 @@ export function createKolloidSketch() {
           break;
         }
       }
-      p.cursor(hovered ? "pointer" : "default");
+      p.cursor(hovered?.item?.link ? "pointer" : "default");
     };
 
     p.mouseClicked = () => {
-      if (hovered?.item?.link) {
-        window.open(hovered.item.link, "_blank", "noopener,noreferrer");
-      }
+      if (!enableLinks) return;
+      const url = hovered?.item?.link;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
 
     p.draw = () => {
       p.background(247, 245, 242);
+
       for (const ptl of particles) ptl.update();
       for (let i = 0; i < 3; i++) resolveOverlaps();
       for (const ptl of particles) ptl.draw();
-      if (hovered) drawTooltip(hovered.item);
+
+      // ツールチップはリンク有効時のみ
+      if (enableLinks && hovered?.item) drawTooltip(hovered.item);
     };
   };
 }
