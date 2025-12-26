@@ -270,45 +270,49 @@ export function createKolloidSketch(options = {}) {
       p.textSize(12);
 
       const pad = 10;
-      const line1 = it.title ?? "";
+      const lineH = 16;
 
-      const displayName =
+      const title = it.title ?? "";
+
+      // contributors.json から表示名を引く
+      const contributorName =
         contributorsMap?.[it.contributor]?.displayName ?? it.contributor ?? "";
-      const line2 = displayName;
 
-      const line3 = it.genre ?? "";
+      const genre = it.genre ?? "";
+
+      const l1 = `タイトル：${title}`;
+      const l2 = `制作者：${contributorName}`;
+      const l3 = `ジャンル：${genre}`;
 
       // 幅は3行の最大に合わせる
       const w =
-        Math.max(p.textWidth(line1), p.textWidth(line2), p.textWidth(line3)) +
-        pad * 2;
+        Math.max(p.textWidth(l1), p.textWidth(l2), p.textWidth(l3)) + pad * 2;
 
-      // 3行ぶんの高さ（行間は 16px 想定）
-      const lineH = 16;
-      const textH = line3 ? lineH * 3 : lineH * 2; // genre が空なら2行に戻す
-      const h = pad * 2 + textH + 2;
+      // 高さ（3行）
+      const h = pad * 2 + lineH * 3 + 2;
 
       let x = p.mouseX + 14;
       let y = p.mouseY + 14;
       if (x + w > p.width) x = p.width - w - 10;
       if (y + h > p.height) y = p.height - h - 10;
 
+      // 背景
       p.fill(255, 255, 255, 230);
       p.rect(x, y, w, h, 10);
 
+      // テキスト
       p.fill(40);
-      p.text(line1, x + pad, y + pad);
+      p.text(l1, x + pad, y + pad);
 
-      p.fill(90);
-      p.text(line2, x + pad, y + pad + lineH);
+      p.fill(80);
+      p.text(l2, x + pad, y + pad + lineH);
 
-      if (line3) {
-        p.fill(120);
-        p.text(line3, x + pad, y + pad + lineH * 2);
-      }
+      p.fill(120);
+      p.text(l3, x + pad, y + pad + lineH * 2);
 
       p.pop();
     }
+
 
     p.setup = () => {
       const container = document.getElementById("canvas-container");
