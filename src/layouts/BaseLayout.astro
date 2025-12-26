@@ -90,16 +90,16 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       nav.site-nav {
-        position: absolute;
-        right: 1.5rem;
-        top: 1.2rem;
+        position: static;
+        display: flex;
+        justify-content: center;
+        gap: 1.2rem;
       }
 
       nav.site-nav a {
         text-decoration: none;
         color: #666;
-        font-size: 1.3rem;
-        margin-left: 1rem;
+        font-size: 1.15rem;
         position: relative;
         transition: color 0.2s ease;
       }
@@ -124,32 +124,12 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       @media (max-width: 600px) {
-        header.site-header {
-          height: auto;
-          padding: 1.5rem 1.2rem 1rem;
-          margin-top: 2rem;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .site-title-link {
-          position: static;
-          transform: none;
-          margin-bottom: 0.3rem;
-        }
-
         .site-logo {
           height: 84px;
         }
 
-        nav.site-nav {
-          position: static;
-          margin-top: 0.4rem;
-        }
-
         nav.site-nav a {
-          font-size: 1.2rem;
-          margin-left: 0.6rem;
+          font-size: 1.05rem;
         }
       }
 
