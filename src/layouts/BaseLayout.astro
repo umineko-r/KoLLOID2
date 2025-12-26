@@ -55,27 +55,29 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       header.site-header {
-        padding: 1.2rem 1.5rem;
+        padding: 1.6rem 1.5rem 1.2rem;
         max-width: 960px;
         margin: 0 auto;
         margin-top: 2rem;
-        position: relative;
-        height: 64px;
+
         display: flex;
+        flex-direction: column;
         align-items: center;
+        gap: 0.6rem;
+
+        position: relative;
       }
 
       .site-title-link {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        position: static;
+        transform: none;
         display: inline-flex;
         align-items: center;
         text-decoration: none;
       }
 
       .site-logo {
-        height: 168px;
+        height: 130px;
         width: auto;
         display: block;
         opacity: 0.92;
