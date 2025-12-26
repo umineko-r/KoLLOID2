@@ -272,13 +272,21 @@ export function createKolloidSketch(options = {}) {
       const pad = 10;
       const line1 = it.title ?? "";
 
-      // ★ここが肝：contributorsMap から displayName を引く
       const displayName =
         contributorsMap?.[it.contributor]?.displayName ?? it.contributor ?? "";
       const line2 = displayName;
 
-      const w = Math.max(p.textWidth(line1), p.textWidth(line2)) + pad * 2;
-      const h = pad * 2 + 30;
+      const line3 = it.genre ?? "";
+
+      // 幅は3行の最大に合わせる
+      const w =
+        Math.max(p.textWidth(line1), p.textWidth(line2), p.textWidth(line3)) +
+        pad * 2;
+
+      // 3行ぶんの高さ（行間は 16px 想定）
+      const lineH = 16;
+      const textH = line3 ? lineH * 3 : lineH * 2; // genre が空なら2行に戻す
+      const h = pad * 2 + textH + 2;
 
       let x = p.mouseX + 14;
       let y = p.mouseY + 14;
@@ -292,7 +300,12 @@ export function createKolloidSketch(options = {}) {
       p.text(line1, x + pad, y + pad);
 
       p.fill(90);
-      p.text(line2, x + pad, y + pad + 16);
+      p.text(line2, x + pad, y + pad + lineH);
+
+      if (line3) {
+        p.fill(120);
+        p.text(line3, x + pad, y + pad + lineH * 2);
+      }
 
       p.pop();
     }
