@@ -1,6 +1,16 @@
 ---
 // src/layouts/BaseLayout.astro
 
+import contributors from "../data/contributors.json";
+
+// （JSON import が怒られる環境向けの型付け：なくても動きますがVSCodeが静かになります）
+type ContributorsMap = {
+  [id: string]: {
+    displayName?: string;
+    links?: { [key: string]: string };
+  };
+};
+
 interface Props {
   pageTitle?: string;
   subtitle?: string;
@@ -14,6 +24,8 @@ const {
   showCanvas = true,
   enableLinks = false,
 } = Astro.props;
+
+const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
 ---
 
 <!DOCTYPE html>
@@ -33,7 +45,6 @@ const {
     )}
 
     <style>
-      /* （CSSはそのまま） */
       body {
         margin: 0;
         min-height: 100vh;
@@ -185,8 +196,12 @@ const {
     <footer class="site-footer">© KoLLOID, 2025–</footer>
 
     {/* ★ script は常に出す（showCanvas=false のページでも destroy できるように） */}
-    <script type="module" is:inline>
-      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251223-2";
+    <script
+      type="module"
+      is:inline
+      define:vars={{ CONTRIBUTORS }}
+    >
+      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251226-1";
 
       function getFlags() {
         const root = document.body;
@@ -224,7 +239,9 @@ const {
           return;
         }
 
-        window.__kolloidP5__ = new p5(createKolloidSketch({ enableLinks }));
+        window.__kolloidP5__ = new p5(
+          createKolloidSketch({ enableLinks, contributorsMap: CONTRIBUTORS })
+        );
       }
 
       // フルロード

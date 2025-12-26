@@ -5,7 +5,7 @@
 //
 // ★重要：enableLinks は「起動時固定」ではなく、bodyのdata属性を毎回参照して強制的に反映する
 //        これにより、もし p5 がページ遷移で生き残っても About/Statement では確実にリンクOFFになる。
-console.log("[kolloid] particles.js loaded v=20251223-1");
+console.log("[kolloid] particles.js loaded v=20251226-1");
 
 function toDate(value) {
   if (!value) return null;
@@ -39,7 +39,7 @@ function selectItems(allItems, opts) {
       _updatedAt: toDate(it.updatedAt),
       _key: it.id || it.link,
     }))
-    .filter((it) => it.creator && it.title && it.link && it._key);
+    .filter((it) => it.contributor && it.title && it.link && it._key);
 
   if (normalized.length === 0) return [];
 
@@ -49,7 +49,7 @@ function selectItems(allItems, opts) {
 
   const igByAccount = new Map();
   for (const it of ig) {
-    const key = (it.account || it.creator || "").trim() || "unknown";
+    const key = (it.account || it.contributor || "").trim() || "unknown";
     if (!igByAccount.has(key)) igByAccount.set(key, []);
     igByAccount.get(key).push(it);
   }
@@ -67,7 +67,7 @@ function selectItems(allItems, opts) {
   const items = [...nonIg, ...igCapped];
 
   // Contributors 数 M
-  const contributors = new Set(items.map((x) => x.creator)).size || 1;
+  const contributors = new Set(items.map((x) => x.contributor)).size || 1;
 
   // 新しめ候補
   const now = new Date();
@@ -104,7 +104,7 @@ function selectItems(allItems, opts) {
 
     for (const it of shuffled) {
       if (out.length >= want) break;
-      const key = it.creator;
+      const key = it.contributor;
       const c = counts.get(key) || 0;
       if (c >= cap) continue;
       counts.set(key, c + 1);
@@ -145,8 +145,11 @@ function isLinksEnabled() {
 }
 
 export function createKolloidSketch(options = {}) {
-  // 起動時の値も受け取るが、実際の挙動は isLinksEnabled() を優先する
-  const { enableLinks: initialEnableLinks = false } = options;
+  const {
+    enableLinks: initialEnableLinks = false,
+    contributorsMap = {}, 
+  } = options;
+
 
   return (p) => {
     const particles = [];
@@ -268,7 +271,11 @@ export function createKolloidSketch(options = {}) {
 
       const pad = 10;
       const line1 = it.title ?? "";
-      const line2 = it.creator ?? "";
+
+      // ★ここが肝：contributorsMap から displayName を引く
+      const displayName =
+        contributorsMap?.[it.contributor]?.displayName ?? it.contributor ?? "";
+      const line2 = displayName;
 
       const w = Math.max(p.textWidth(line1), p.textWidth(line2)) + pad * 2;
       const h = pad * 2 + 30;
@@ -343,7 +350,7 @@ export function createKolloidSketch(options = {}) {
       const url = hovered?.item?.link;
       if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
-        
+
     p.touchStarted = () => {
       // 画面スクロールを邪魔しないため、リンクOFFなら何もしない
       if (!isLinksEnabled()) return true;

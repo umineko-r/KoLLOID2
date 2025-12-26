@@ -1,0 +1,48 @@
+---
+// src/pages/contributors.astro
+import BaseLayout from "../layouts/BaseLayout.astro";
+import contributors from "../data/contributors.json";
+
+const pageTitle = "Contributors | KoLLOID";
+
+const list = Object.entries(contributors).map(([id, c]) => ({
+  id,
+  displayName: c.displayName ?? id,
+  links: c.links ?? {},
+}));
+---
+
+<BaseLayout pageTitle={pageTitle} enableLinks={false} showCanvas={true}>
+  <article style="text-align:left; line-height:1.9; margin:0 auto; max-width:760px;">
+    <h2>Contributors</h2>
+
+    <ul style="list-style:none; padding:0; margin:1.2rem 0 0;">
+      {list.map((c) => (
+        <li style="padding:0.9rem 0; border-bottom:1px solid rgba(0,0,0,0.08);">
+          <div style="font-size:1.05rem;">
+            <strong>{c.displayName}</strong>
+            <span style="color:#888; margin-left:0.6rem; font-size:0.9rem;">@{c.id}</span>
+          </div>
+
+          <div style="margin-top:0.35rem; font-size:0.95rem;">
+            {c.links.instagram && (
+              <a href={c.links.instagram} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline; margin-right:0.8rem;">
+                Instagram
+              </a>
+            )}
+            {c.links.note && (
+              <a href={c.links.note} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline; margin-right:0.8rem;">
+                note
+              </a>
+            )}
+            {c.links.youtube && (
+              <a href={c.links.youtube} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline;">
+                YouTube
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </article>
+</BaseLayout>
