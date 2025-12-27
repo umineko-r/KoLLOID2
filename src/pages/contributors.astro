@@ -10,12 +10,11 @@ type Contributor = {
 
 const entries = Object.entries(contributors) as [string, Contributor][];
 
-// ★リンク表示名の変換表
 const LINK_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
+  facebook: "Facebook",
   note: "note",
-  facebook:"Facebook",
 };
 ---
 
@@ -42,25 +41,35 @@ const LINK_LABELS: Record<string, string> = {
           </p>
         )}
 
-        {/* リンク */}
+        {/* ★リンク（横並び） */}
         {c.links && (
-          <ul style="margin-top: 0.6rem; padding-left: 1.2rem;">
+          <div
+            style="
+              margin-top: 0.6rem;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.8rem 1.2rem;
+              font-size: 0.9rem;
+            "
+          >
             {Object.entries(c.links).map(([key, url]) => {
               const label = LINK_LABELS[key] ?? key;
               return (
-                <li>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style="color:#444; text-decoration:underline;"
-                  >
-                    {key}（{label}）
-                  </a>
-                </li>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="
+                    color: #444;
+                    text-decoration: underline;
+                    white-space: nowrap;
+                  "
+                >
+                  {key}（{label}）
+                </a>
               );
             })}
-          </ul>
+          </div>
         )}
       </section>
     ))}
