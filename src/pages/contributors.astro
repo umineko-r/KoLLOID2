@@ -1,76 +1,58 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import contributorsRaw from "../data/contributors.json";
+import contributors from "../data/contributors.json";
 
 type Contributor = {
-  displayName?: string;
-  links?: { [key: string]: string };
-};
-
-type ContributorsMap = {
-  [id: string]: Contributor;
-};
-
-const contributors = contributorsRaw as ContributorsMap;
-const pageTitle = "Contributors | KoLLOID";
-
-/** 1) まずキー数を数える（配列メソッド不使用） */
-let n = 0;
-for (const id in contributors) {
-  if (contributors[id]) n++;
-}
-
-/** 2) 固定長の配列を作って index 代入（push 不使用） */
-const list: {
-  id: string;
   displayName: string;
-  links: { [key: string]: string };
-}[] = new Array(n);
+  genres?: string[];
+  links?: Record<string, string>;
+};
 
-let i = 0;
-for (const id in contributors) {
-  const c = contributors[id];
-  if (!c) continue;
-
-  list[i] = {
-    id,
-    displayName: c.displayName ?? id,
-    links: c.links ?? {},
-  };
-  i++;
-}
+const entries = Object.entries(contributors) as [string, Contributor][];
 ---
 
-<BaseLayout pageTitle={pageTitle} enableLinks={false} showCanvas={true}>
-  <article style="text-align:left; line-height:1.9; margin:0 auto; max-width:760px;">
+<BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false}>
+  <article style="max-width: 720px; margin: 0 auto; text-align: left;">
     <h2>Contributors</h2>
 
-    <ul style="list-style:none; padding:0; margin:1.2rem 0 0;">
-      {list.map((c) => (
-        <li style="padding:0.9rem 0; border-bottom:1px solid rgba(0,0,0,0.08);">
-          <div style="font-size:1.05rem;">
-            <strong>{c.displayName}</strong>
-          </div>
+    {entries.map(([id, c]) => (
+      <section
+        style="
+          margin-top: 2.5rem;
+          padding-bottom: 2rem;
+          border-bottom: 1px solid rgba(0,0,0,0.1);
+        "
+      >
+        <h3 style="margin-bottom: 0.4rem;">
+          {c.displayName}
+        </h3>
 
-          <div style="margin-top:0.35rem; font-size:0.95rem;">
-            {c.links.instagram && (
-              <a href={c.links.instagram} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline; margin-right:0.8rem;">
-                Instagram
-              </a>
-            )}
-            {c.links.note && (
-              <a href={c.links.note} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline; margin-right:0.8rem;">
-                note
-              </a>
-            )}
-            {c.links.youtube && (
-              <a href={c.links.youtube} target="_blank" rel="noopener noreferrer" style="color:#444; text-decoration:underline;">
-                YouTube
-              </a>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
+        {/* ★ジャンル */}
+        {c.genres && (
+          <p style="font-size: 0.9rem; color: #555;">
+            ジャンル：
+            {c.genres.join("・")}
+          </p>
+        )}
+
+        {/* ★リンク */}
+        {c.links && (
+          <ul style="margin-top: 0.6rem; padding-left: 1.2rem;">
+            {Object.entries(c.links).map(([key, url]) => (
+              <li>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="color:#444; text-decoration:underline;"
+                >
+                  {key}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    ))}
   </article>
 </BaseLayout>
