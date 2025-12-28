@@ -1,0 +1,108 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import contributors from "../../data/contributors.json";
+import fs from "node:fs/promises";
+
+/** types（Astro/TSが暴れない最小限） */
+type Particle = {
+  id?: string;
+  contributor: string;
+  title: string;
+  link: string;
+  genre?: string;
+  updatedAt?: string;
+};
+
+type Contributor = {
+  displayName: string;
+  genres?: string[];
+  links?: Record<string, string>;
+};
+
+type ContributorsMap = Record<string, Contributor>;
+
+const pageTitle = "Contents | KoLLOID";
+
+/**
+ * public/data/particles.json を読む
+ * - new URL で確実にルートから解決
+ * - 読めない時も落とさず空配列で続行
+ */
+const jsonPath = new URL("/public/data/particles.json", import.meta.url);
+
+let particles: Particle[] = [];
+try {
+  const raw = await fs.readFile(jsonPath, "utf-8");
+  const parsed = JSON.parse(raw);
+
+  particles = Array.isArray(parsed)
+    ? (parsed
+        .filter((p): p is Particle => typeof p?.contributor === "string" && typeof p?.title === "string" && typeof p?.link === "string")
+        .map((p) => ({
+          id: p.id,
+          contributor: p.contributor,
+          title: p.title,
+          link: p.link,
+          genre: p.genre,
+          updatedAt: p.updatedAt,
+        })) as Particle[])
+    : [];
+} catch (e) {
+  console.warn("[contents] failed to read public/data/particles.json:", e);
+  particles = [];
+}
+
+const contributorsMap = contributors as ContributorsMap;
+---
+
+<BaseLayout pageTitle={pageTitle} enableLinks={false}>
+  <article style="text-align:left; max-width:760px; margin:0 auto;">
+    <h2>Contents</h2>
+
+    <p style="font-size:0.85rem; color:#777; margin-bottom:1.5rem;">
+      ※ このページは KoLLOID 運営用のコンテンツ一覧です。
+    </p>
+
+    {Object.entries(contributorsMap).map(([key, contributor]) => {
+      const items = particles
+        .filter((p) => p.contributor === key)
+        .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+      if (items.length === 0) return null;
+
+      return (
+        <section style="margin-top:2.5rem;">
+          <h3 style="margin-bottom:0.3rem;">
+            {contributor.displayName}
+          </h3>
+
+          {contributor.genres?.length ? (
+            <p style="font-size:0.85rem; color:#777; margin-bottom:0.6rem;">
+              ジャンル：{contributor.genres.join(" / ")}
+            </p>
+          ) : null}
+
+          <ul style="padding-left:1.2rem; margin:0;">
+            {items.map((item) => (
+              <li style="margin-bottom:0.5rem;">
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="text-decoration:underline;"
+                >
+                  {item.title}
+                </a>
+                <span style="color:#777; font-size:0.85rem;">
+                  {" "}（{item.genre || "—"}
+                  {item.updatedAt ? ` / ${item.updatedAt}` : ""}
+                  ）
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </article>
+</BaseLayout>
