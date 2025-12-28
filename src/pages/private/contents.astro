@@ -58,7 +58,20 @@ const contributorsMap = contributors as ContributorsMap;
 <BaseLayout pageTitle={pageTitle} enableLinks={false}>
   <article style="text-align:left; max-width:760px; margin:0 auto;">
     <h2>Contents</h2>
+    <p style="font-size:0.85rem; color:#777;">
+    contributors: {Object.keys(contributorsMap).length} /
+    particles: {particles.length}
+    </p>
 
+    <details style="margin:0.8rem 0;">
+        <summary style="cursor:pointer;">debug</summary>
+        <pre style="font-size:12px; white-space:pre-wrap;">
+            {JSON.stringify({
+            contributorKeys: Object.keys(contributorsMap),
+            sampleParticle: particles[0] ?? null
+            }, null, 2)}
+        </pre>
+    </details>
     <p style="font-size:0.85rem; color:#777; margin-bottom:1.5rem;">
       ※ このページは KoLLOID 運営用のコンテンツ一覧です。
     </p>
