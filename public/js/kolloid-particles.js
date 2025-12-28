@@ -1,12 +1,11 @@
 // public/js/kolloid-particles.js
 // 更新情報JSONを読み込み、粒子として表示する版（自動cap対応）
-//
 // - enableLinks=true: JSON粒子（リンク/hoverあり）
 // - enableLinks=false: ダミー粒子（リンク/hoverなし）
 //
 // ★重要：enableLinks は「起動時固定」ではなく、bodyのdata属性を毎回参照して強制的に反映する
 //        これにより、もし p5 がページ遷移で生き残っても About/Statement では確実にリンクOFFになる。
-console.log("[kolloid] particles.js loaded v=20251227-3");
+console.log("[kolloid] particles.js loaded v=20251228-genre-1");
 
 function toDate(value) {
   if (!value) return null;
@@ -26,29 +25,27 @@ function clamp(x, min, max) {
   return Math.max(min, Math.min(max, x));
 }
 
-function targetCount() {
-  const w = window.innerWidth;
-  if (w <= 600) return 32;
-  if (w <= 1024) return 44;
-  return 56;
+// ★ジャンル色（同系統の“うっすら差”だけ）
+// ※「1」に沿い、データ粒子（itemあり）のみ色分けする
+function genreColor(genre) {
+  const g = (genre || "").trim();
+
+  // KoLLOID の 36.9℃ ベース（やや桃色）
+  // 差は“わかる人にはわかる”程度に留める
+  if (g === "音楽") return [255, 198, 170];
+  if (g === "短歌") return [255, 190, 184];
+  if (g === "文章") return [255, 206, 164];
+
+  // 未分類/その他
+  return [255, 190, 170];
 }
 
-// ★ここが肝：今この瞬間にリンクが許可されているかを毎回読む
-function isLinksEnabled() {
-  return document.body?.dataset?.enableLinks === "true";
-}
-
-function isTouchDevice() {
-  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
-}
-
-/**
- * ★ contributors.json は { [id]: { displayName, links... } } 形式
- * particles.json は contributor にID（例: "umineko"）を入れる
- * 表示時だけ displayName に変換する
- */
-function getContributorDisplayName(contributorId, contributorsMap) {
-  return contributorsMap?.[contributorId]?.displayName ?? contributorId;
+// contributorsMap から表示名を解決
+function resolveDisplayName(contributorsMap, contributorId) {
+  const id = (contributorId || "").trim();
+  if (!id) return contributorId || "";
+  const ent = contributorsMap && contributorsMap[id];
+  return (ent && ent.displayName) ? ent.displayName : id;
 }
 
 function selectItems(allItems, opts) {
@@ -92,7 +89,7 @@ function selectItems(allItems, opts) {
 
   const items = [...nonIg, ...igCapped];
 
-  // Contributors 数 M（IDで数える）
+  // Contributors 数 M
   const contributors = new Set(items.map((x) => x.contributor)).size || 1;
 
   // 新しめ候補
@@ -158,11 +155,23 @@ function selectItems(allItems, opts) {
   return final;
 }
 
+function targetCount() {
+  const w = window.innerWidth;
+  if (w <= 600) return 32;
+  if (w <= 1024) return 44;
+  return 56;
+}
+
+// ★ここが肝：今この瞬間にリンクが許可されているかを毎回読む
+function isLinksEnabled() {
+  return document.body?.dataset?.enableLinks === "true";
+}
+
 export function createKolloidSketch(options = {}) {
   // 起動時の値も受け取るが、実際の挙動は isLinksEnabled() を優先する
   const {
     enableLinks: initialEnableLinks = false,
-    contributorsMap = {}, // ★BaseLayoutから渡される
+    contributorsMap = {}, // BaseLayout から渡す（displayName解決用）
   } = options;
 
   return (p) => {
@@ -170,38 +179,51 @@ export function createKolloidSketch(options = {}) {
     let items = [];
     let hovered = null;
 
-    // ★スマホ用：タップ選択（選択中は停止＋情報表示）
+    // ★スマホ用：タップで固定＆情報表示する選択状態
     let selected = null;
+
+    function isTouchDevice() {
+      return ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    }
 
     class Particle {
       constructor(item) {
         this.item = item; // item=null の場合はダミー粒子
-        this.frozen = false; // ★追加：停止状態
         this.reset(true);
       }
 
       reset(first = false) {
         this.x = p.random(p.width);
         this.y = p.random(p.height);
+        const isTouch = isTouchDevice();
+        this.r = isTouch ? p.random(16, 46) : p.random(10, 40);
 
-        this.r = isTouchDevice()
-          ? p.random(16, 46)
-          : p.random(10, 40);
-
+        // 速度は控えめ（冬の海水浴場の静けさ）
         this.vx = p.random(-0.3, 0.3);
         this.vy = p.random(-0.3, 0.3);
+
         this.alpha = p.random(60, 120);
 
         if (first) {
           this.x = p.random(p.width * 0.1, p.width * 0.9);
           this.y = p.random(p.height * 0.15, p.height * 0.9);
         }
+      }
 
-        this.frozen = false;
+      resume() {
+        // 固定解除時、少しだけ漂わせる
+        this.vx = p.random(-0.25, 0.25);
+        this.vy = p.random(-0.25, 0.25);
+      }
+
+      freeze() {
+        this.vx = 0;
+        this.vy = 0;
       }
 
       update() {
-        if (this.frozen) return;
+        // 選択中は停止
+        if (this === selected && isTouchDevice()) return;
 
         this.x += this.vx;
         this.y += this.vy;
@@ -217,24 +239,35 @@ export function createKolloidSketch(options = {}) {
       }
 
       draw() {
-        p.noStroke();
-        p.fill(255, 190, 170, this.alpha);
-        p.circle(this.x, this.y, this.r * 2);
+        // ★ジャンル色：データ粒子のみ
+        const [rr, gg, bb] = this.item
+          ? genreColor(this.item.genre)
+          : [255, 190, 170];
 
-        // ★選択中の視覚フィードバック（控えめ）
-        if (this === selected && this.item) {
-          p.noFill();
-          p.stroke(255, 170, 150, 140);
-          p.strokeWeight(2);
-          p.circle(this.x, this.y, this.r * 2 + 6);
+        // 選択中の粒子は“ほんの少し”存在感（競争にならない程度）
+        const isSelected = this === selected && isTouchDevice();
+
+        if (isSelected) {
+          p.stroke(rr, gg, bb, 120);
+          p.strokeWeight(1.2);
+        } else {
           p.noStroke();
         }
+
+        p.fill(rr, gg, bb, this.alpha);
+        p.circle(this.x, this.y, this.r * 2);
       }
 
       hitTest(mx, my) {
         const dx = mx - this.x;
         const dy = my - this.y;
-        const extra = isTouchDevice() ? 18 : 0; // 指対策
+
+        // タッチ端末は当たり判定を広げる（指サイズ対策）
+        const isTouch = isTouchDevice();
+
+        // 最低でも 26px くらいは欲しい（指が乗る面積）
+        const extra = isTouch ? 18 : 0;
+
         const rr = this.r + extra;
         return dx * dx + dy * dy <= rr * rr;
       }
@@ -250,27 +283,15 @@ export function createKolloidSketch(options = {}) {
           const dy = b.y - a.y;
           let dist = Math.sqrt(dx * dx + dy * dy);
           const minDist = a.r + b.r + padding;
-
           if (dist === 0) dist = 0.01;
-
           if (dist < minDist) {
             const overlap = (minDist - dist) / 2;
             const ux = dx / dist;
             const uy = dy / dist;
-
-            // ★ frozen を優先（動く側に寄せる）
-            if (a.frozen && !b.frozen) {
-              b.x += ux * overlap;
-              b.y += uy * overlap;
-            } else if (!a.frozen && b.frozen) {
-              a.x -= ux * overlap;
-              a.y -= uy * overlap;
-            } else {
-              a.x -= ux * overlap * 0.5;
-              a.y -= uy * overlap * 0.5;
-              b.x += ux * overlap * 0.5;
-              b.y += uy * overlap * 0.5;
-            }
+            a.x -= ux * overlap * 0.5;
+            a.y -= uy * overlap * 0.5;
+            b.x += ux * overlap * 0.5;
+            b.y += uy * overlap * 0.5;
           }
         }
       }
@@ -289,7 +310,9 @@ export function createKolloidSketch(options = {}) {
       hovered = null;
 
       const count = targetCount();
-      for (let i = 0; i < count; i++) particles.push(new Particle(null));
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(null));
+      }
     }
 
     function rebuildDataParticles() {
@@ -307,92 +330,63 @@ export function createKolloidSketch(options = {}) {
       for (const it of selectedItems) particles.push(new Particle(it));
     }
 
-    function hitParticle(mx, my) {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        if (particles[i].hitTest(mx, my)) return particles[i];
-      }
-      return null;
-    }
-
-    function clearSelection() {
-      if (selected) selected.frozen = false;
-      selected = null;
-      hovered = null;
-    }
-
-    // PC用：マウス位置付近にツールチップ
-    function drawTooltip(it) {
+    function drawTooltipOrCard(it, mx, my) {
       if (!it) return;
 
-      const displayName = getContributorDisplayName(it.contributor, contributorsMap);
+      const title = it.title ?? "";
+      const contributorName = resolveDisplayName(contributorsMap, it.contributor);
+      const genre = it.genre ?? "";
+
+      // 表示形式：
+      // タイトル：{title}
+      // 制作者：{displayName}
+      // ジャンル：{genre}
+      const line1 = `タイトル：${title}`;
+      const line2 = `制作者：${contributorName}`;
+      const line3 = `ジャンル：${genre || "—"}`;
 
       p.push();
       p.textAlign(p.LEFT, p.TOP);
       p.textSize(12);
 
       const pad = 10;
-      const line1 = `タイトル：${it.title ?? ""}`;
-      const line2 = `制作者：${displayName}`;
-      const line3 = `ジャンル：${it.genre ?? ""}`;
-
       const w =
         Math.max(p.textWidth(line1), p.textWidth(line2), p.textWidth(line3)) +
         pad * 2;
-      const h = pad * 2 + 48;
+      const h = pad * 2 + 46;
 
-      let x = p.mouseX + 14;
-      let y = p.mouseY + 14;
+      let x = mx + 14;
+      let y = my + 14;
+
       if (x + w > p.width) x = p.width - w - 10;
       if (y + h > p.height) y = p.height - h - 10;
 
+      p.noStroke();
       p.fill(255, 255, 255, 230);
-      p.rect(x, y, w, h, 10);
+      p.rect(x, y, w, h, 12);
 
       p.fill(40);
       p.text(line1, x + pad, y + pad);
 
-      p.fill(80);
+      p.fill(70);
       p.text(line2, x + pad, y + pad + 16);
 
-      p.fill(80);
+      p.fill(90);
       p.text(line3, x + pad, y + pad + 32);
 
       p.pop();
     }
 
-    // スマホ用：画面下部に情報パネル
-    function drawInfoPanel(it) {
-      if (!it) return;
+    function findHitParticle(mx, my) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        if (particles[i].hitTest(mx, my)) return particles[i];
+      }
+      return null;
+    }
 
-      const displayName = getContributorDisplayName(it.contributor, contributorsMap);
-
-      const pad = 16;
-      const h = 126;
-      const x = 12;
-      const y = p.height - h - 12;
-      const w = p.width - 24;
-
-      p.push();
-      p.noStroke();
-      p.fill(255, 255, 255, 238);
-      p.rect(x, y, w, h, 16);
-
-      p.textAlign(p.LEFT, p.TOP);
-
-      p.fill(35);
-      p.textSize(14);
-      p.text(`タイトル：${it.title ?? ""}`, x + pad, y + pad);
-
-      p.fill(80);
-      p.textSize(12);
-      p.text(`制作者：${displayName}`, x + pad, y + pad + 30);
-      p.text(`ジャンル：${it.genre ?? ""}`, x + pad, y + pad + 50);
-
-      p.fill(120);
-      p.textSize(11);
-      p.text("もう一度タップで開く／空白タップで閉じる", x + pad, y + h - 28);
-
-      p.pop();
+    function openParticleLink(ptl) {
+      const url = ptl?.item?.link;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
     }
 
     p.setup = () => {
@@ -419,63 +413,82 @@ export function createKolloidSketch(options = {}) {
 
     p.windowResized = () => {
       p.resizeCanvas(window.innerWidth, window.innerHeight);
+
+      // 形だけは維持
       if (initialEnableLinks) rebuildDataParticles();
       else buildDummyParticles();
     };
 
-    // PC：hover（スマホは hover を使わない）
+    // PC：ホバー
     p.mouseMoved = () => {
-      if (isTouchDevice()) return;
-
+      // リンクOFF時は何もしない
       if (!isLinksEnabled()) {
         hovered = null;
         p.cursor("default");
         return;
       }
 
-      hovered = hitParticle(p.mouseX, p.mouseY);
+      // タッチ端末では mouseMoved を頼りにしない
+      if (isTouchDevice()) {
+        hovered = null;
+        p.cursor("default");
+        return;
+      }
+
+      hovered = findHitParticle(p.mouseX, p.mouseY);
       p.cursor(hovered?.item?.link ? "pointer" : "default");
     };
 
     // PC：クリックで開く
     p.mouseClicked = () => {
-      if (isTouchDevice()) return;
       if (!isLinksEnabled()) return;
+      if (isTouchDevice()) return;
 
       const url = hovered?.item?.link;
       if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
 
-    // スマホ：タップで「停止＋情報表示」、再タップで開く
+    // スマホ：タップで「止めて情報表示」→ 同じ粒子をもう一度タップで開く
     p.touchStarted = () => {
+      // 画面スクロールを邪魔しないため、リンクOFFなら何もしない
       if (!isLinksEnabled()) return true;
 
+      // タップ地点（touches[0]）で判定
       const t = p.touches && p.touches[0];
       const mx = t ? t.x : p.mouseX;
       const my = t ? t.y : p.mouseY;
 
-      const hit = hitParticle(mx, my);
+      const hit = findHitParticle(mx, my);
 
-      // 粒子に当たっていない：選択解除してスクロールOK
-      if (!hit || !hit.item || !hit.item.link) {
-        clearSelection();
-        return true;
+      // 何も当たらなければ選択解除（漂い再開）
+      if (!hit) {
+        if (selected) {
+          selected.resume();
+          selected = null;
+        }
+        return true; // スクロール等を妨げない
       }
 
-      // 1回目タップ：停止して情報表示（遷移しない）
-      if (selected !== hit) {
-        clearSelection();
+      // ダミー粒子は選択だけ（リンクなし）
+      if (!hit.item) {
+        if (selected && selected !== hit) selected.resume();
         selected = hit;
-        selected.frozen = true;
-        return false; // タップイベント消費（誤作動防止）
+        selected.freeze();
+        return false; // タップ消費（誤作動防止）
       }
 
-      // 2回目タップ：同じ粒子ならリンクを開く
-      const url = hit.item.link;
-      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      // 当たった粒子が「すでに選択中」なら開く
+      if (selected === hit) {
+        openParticleLink(hit);
+        return false;
+      }
 
-      clearSelection();
-      return false;
+      // 別の粒子を選択：前の選択を解除 → 新しい粒子を固定
+      if (selected && selected !== hit) selected.resume();
+      selected = hit;
+      selected.freeze();
+
+      return false; // ★タップイベント消費（誤作動防止）
     };
 
     p.draw = () => {
@@ -485,14 +498,14 @@ export function createKolloidSketch(options = {}) {
       for (let i = 0; i < 3; i++) resolveOverlaps();
       for (const ptl of particles) ptl.draw();
 
-      // PC：hoverツールチップ
+      // PC：ホバーで表示
       if (!isTouchDevice() && isLinksEnabled() && hovered?.item) {
-        drawTooltip(hovered.item);
+        drawTooltipOrCard(hovered.item, p.mouseX, p.mouseY);
       }
 
-      // スマホ：選択パネル
+      // スマホ：選択中の粒子に情報表示（粒子の近く）
       if (isTouchDevice() && isLinksEnabled() && selected?.item) {
-        drawInfoPanel(selected.item);
+        drawTooltipOrCard(selected.item, selected.x, selected.y);
       }
     };
   };
