@@ -1,0 +1,47 @@
+name: Update particles.json from RSS
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # daily 09:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-particles
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Update particles
+        run: npm run update:particles
+
+      - name: Commit & push if changed
+        run: |
+          if git status --porcelain | grep -q .; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add public/data/particles.json
+            git commit -m "chore: update particles.json"
+            git push
+          else
+            echo "No changes."
+          fi
