@@ -11,5 +11,12 @@
       { "siteType": "youtube", "genre": "音楽", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC3AicuBvGDbWmmnOuBg9u_Q" },
       { "siteType": "note",   "genre": "文章", "url": "https://note.com/umineko_note/rss" }
     ]
+  },
+  "ibuki":{
+    "displayName": "Ibuki",
+    "genres":["旅","食"],
+    "links": {
+      "instagram": "https://www.instagram.com/evk38_curry"
+    }
   }
 }

@@ -10,6 +10,7 @@ type Particle = {
   title: string;
   link: string;
   genre?: string;
+  siteType?: string;
   updatedAt?: string;
 };
 
@@ -21,11 +22,25 @@ type Contributor = {
 
 type ContributorsMap = Record<string, Contributor>;
 
-const pageTitle = "Contents | KoLLOID";
+type GroupBlock = {
+  siteType: string; // normalized
+  label: string; // display label
+  items: Particle[];
+};
 
+type ContributorBlock = {
+  key: string;
+  displayName: string;
+  genres: string[];
+  totalCount: number;
+  latest: string | null;
+  groups: GroupBlock[];
+};
+
+const pageTitle = "Contents | KoLLOID";
 const contributorsMap = contributors as ContributorsMap;
 
-// ★ここが肝：プロジェクトルートから public/data/particles.json を読む
+// public/data/particles.json を読む
 const particlesPath = path.join(process.cwd(), "public", "data", "particles.json");
 
 let particles: Particle[] = [];
@@ -37,60 +52,132 @@ try {
   console.warn("[contents] failed to read particles.json:", particlesPath, e);
   particles = [];
 }
+
+function normalizeSiteType(siteType?: string) {
+  const s = (siteType || "").trim().toLowerCase();
+  return s || "other";
+}
+
+function siteTypeLabel(siteType: string) {
+  const map: Record<string, string> = {
+    youtube: "YouTube",
+    note: "note",
+    instagram: "Instagram",
+    blog: "Blog",
+    facebook: "Facebook",
+    other: "Other",
+  };
+  return map[siteType] || siteType;
+}
+
+const preferredOrder = ["instagram", "note", "youtube", "blog", "facebook", "other"];
+
+function sortSiteTypes(a: string, b: string) {
+  const ia = preferredOrder.indexOf(a);
+  const ib = preferredOrder.indexOf(b);
+  if (ia !== -1 && ib !== -1) return ia - ib;
+  if (ia !== -1) return -1;
+  if (ib !== -1) return 1;
+  return a.localeCompare(b);
+}
+
+// 表示用ブロックを作る（テンプレ側は描画だけにする）
+const blocks: ContributorBlock[] = Object.entries(contributorsMap).flatMap(
+  ([key, contributor]) => {
+    const items = particles
+      .filter((p) => p.contributor === key)
+      .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+    if (items.length === 0) return [];
+
+    const latest = items[0]?.updatedAt || null;
+
+    const grouped: Record<string, Particle[]> = {};
+    for (const it of items) {
+      const st = normalizeSiteType(it.siteType);
+      (grouped[st] ||= []).push(it);
+    }
+
+    const siteTypes = Object.keys(grouped).sort(sortSiteTypes);
+
+    const groups: GroupBlock[] = siteTypes.map((st) => {
+      const list = grouped[st] ?? [];
+      list.sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+      return { siteType: st, label: siteTypeLabel(st), items: list };
+    });
+
+    return [
+      {
+        key,
+        displayName: contributor.displayName,
+        genres: contributor.genres ?? [],
+        totalCount: items.length,
+        latest,
+        groups,
+      },
+    ];
+  }
+);
 ---
 
 <BaseLayout pageTitle={pageTitle} enableLinks={false} showCanvas={false}>
   <article style="text-align:left; max-width:760px; margin:0 auto;">
     <h2>Contents</h2>
-    <p style="font-size:0.85rem; color:#777;">
-    contributors: {Object.keys(contributorsMap).length} /
-    particles: {particles.length}
+
+    <p style="font-size:0.85rem; color:#777; margin:0 0 0.6rem;">
+      contributors: {Object.keys(contributorsMap).length} / particles: {particles.length}
     </p>
 
-    <p style="font-size:0.85rem; color:#777; margin-bottom:1.5rem;">
-      ※ このページは KoLLOID 運営用のコンテンツ一覧です。
+    <p style="font-size:0.85rem; color:#777; margin:0 0 1.5rem;">
+      ※ このページは KoLLOID 運営用のコンテンツ一覧です（外部共有を前提にしていません）。
     </p>
 
-    {Object.entries(contributorsMap).map(([key, contributor]) => {
-      const items = particles
-        .filter((p) => p.contributor === key)
-        .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+    {blocks.map((b) => (
+      <section style="margin-top:2.6rem;">
+        <h3 style="margin:0 0 0.2rem;">
+          {b.displayName}（{b.totalCount}件）
+        </h3>
 
-      if (items.length === 0) return null;
+        <p style="font-size:0.85rem; color:#777; margin:0 0 0.6rem;">
+          {b.latest ? `最終更新：${b.latest}` : "最終更新：—"}
+        </p>
 
-      return (
-        <section style="margin-top:2.5rem;">
-          <h3 style="margin-bottom:0.3rem;">
-            {contributor.displayName}
-          </h3>
+        {b.genres.length ? (
+          <p style="font-size:0.85rem; color:#777; margin:0 0 1rem;">
+            ジャンル：{b.genres.join(" / ")}
+          </p>
+        ) : null}
 
-          {contributor.genres?.length ? (
-            <p style="font-size:0.85rem; color:#777; margin-bottom:0.6rem;">
-              ジャンル：{contributor.genres.join(" / ")}
-            </p>
-          ) : null}
+        {b.groups.map((g) => (
+          <section style="margin:1.2rem 0 0;">
+            <h4 style="margin:0 0 0.5rem; font-size:1rem;">
+              {g.label}（{g.items.length}）
+            </h4>
 
-          <ul style="padding-left:1.2rem; margin:0;">
-            {items.map((item) => (
-              <li style="margin-bottom:0.5rem;">
-                <a
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style="text-decoration:underline;"
-                >
-                  {item.title}
-                </a>
-                <span style="color:#777; font-size:0.85rem;">
-                  {" "}（{item.genre || "—"}
-                  {item.updatedAt ? ` / ${item.updatedAt}` : ""}
-                  ）
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      );
-    })}
+            <ul style="padding-left:1.2rem; margin:0;">
+              {g.items.map((item) => (
+                <li style="margin-bottom:0.55rem;">
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="text-decoration:underline;"
+                  >
+                    {item.title}
+                  </a>
+
+                  <span style="color:#777; font-size:0.85rem;">
+                    {" "}
+                    （{item.genre || "—"}
+                    {item.updatedAt ? ` / ${item.updatedAt}` : ""}
+                    ）
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </section>
+    ))}
   </article>
 </BaseLayout>
