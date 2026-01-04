@@ -40,10 +40,12 @@ type ContributorBlock = {
 const pageTitle = "Contents | KoLLOID";
 const contributorsMap = contributors as ContributorsMap;
 
-// public/data/particles.json を読む
+// public/data/particles.json を読む（無くても壊れない）
 const particlesPath = path.join(process.cwd(), "public", "data", "particles.json");
 
 let particles: Particle[] = [];
+let particlesReadOk = true;
+
 try {
   const raw = await fs.readFile(particlesPath, "utf-8");
   const parsed = JSON.parse(raw);
@@ -51,6 +53,7 @@ try {
 } catch (e) {
   console.warn("[contents] failed to read particles.json:", particlesPath, e);
   particles = [];
+  particlesReadOk = false;
 }
 
 function normalizeSiteType(siteType?: string) {
@@ -81,14 +84,22 @@ function sortSiteTypes(a: string, b: string) {
   return a.localeCompare(b);
 }
 
-// 表示用ブロックを作る（テンプレ側は描画だけにする）
-const blocks: ContributorBlock[] = Object.entries(contributorsMap).flatMap(
+// ★孤児（contributors.json に存在しない contributor を持つ particle）を検出
+const knownKeys = new Set(Object.keys(contributorsMap));
+
+const orphanParticles: Particle[] = particles
+  .filter((p) => {
+    const k = (p.contributor || "").trim();
+    return k.length > 0 && !knownKeys.has(k);
+  })
+  .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+// ★表示用ブロック（0件でも必ず作る）
+const blocks: ContributorBlock[] = Object.entries(contributorsMap).map(
   ([key, contributor]) => {
     const items = particles
       .filter((p) => p.contributor === key)
       .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
-
-    if (items.length === 0) return [];
 
     const latest = items[0]?.updatedAt || null;
 
@@ -106,16 +117,14 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).flatMap(
       return { siteType: st, label: siteTypeLabel(st), items: list };
     });
 
-    return [
-      {
-        key,
-        displayName: contributor.displayName,
-        genres: contributor.genres ?? [],
-        totalCount: items.length,
-        latest,
-        groups,
-      },
-    ];
+    return {
+      key,
+      displayName: contributor.displayName,
+      genres: contributor.genres ?? [],
+      totalCount: items.length,
+      latest,
+      groups,
+    };
   }
 );
 ---
@@ -126,7 +135,14 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).flatMap(
 
     <p style="font-size:0.85rem; color:#777; margin:0 0 0.6rem;">
       contributors: {Object.keys(contributorsMap).length} / particles: {particles.length}
+      {orphanParticles.length ? ` / orphan: ${orphanParticles.length}` : ""}
     </p>
+
+    {!particlesReadOk ? (
+      <p style="font-size:0.85rem; color:#a66; margin:0 0 0.6rem;">
+        ※ particles.json が読み込めませんでした（未生成/未配置の可能性）。contributors の台帳のみ表示しています。
+      </p>
+    ) : null}
 
     <p style="font-size:0.85rem; color:#777; margin:0 0 1.5rem;">
       ※ このページは KoLLOID 運営用のコンテンツ一覧です（外部共有を前提にしていません）。
@@ -148,36 +164,79 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).flatMap(
           </p>
         ) : null}
 
-        {b.groups.map((g) => (
-          <section style="margin:1.2rem 0 0;">
-            <h4 style="margin:0 0 0.5rem; font-size:1rem;">
-              {g.label}（{g.items.length}）
-            </h4>
+        {b.totalCount === 0 ? (
+          <p style="font-size:0.9rem; color:#888; margin:0.2rem 0 0;">
+            まだ登録がありません。
+          </p>
+        ) : (
+          b.groups.map((g) => (
+            <section style="margin:1.2rem 0 0;">
+              <h4 style="margin:0 0 0.5rem; font-size:1rem;">
+                {g.label}（{g.items.length}）
+              </h4>
 
-            <ul style="padding-left:1.2rem; margin:0;">
-              {g.items.map((item) => (
-                <li style="margin-bottom:0.55rem;">
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style="text-decoration:underline;"
-                  >
-                    {item.title}
-                  </a>
+              <ul style="padding-left:1.2rem; margin:0;">
+                {g.items.map((item) => (
+                  <li style="margin-bottom:0.55rem;">
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style="text-decoration:underline;"
+                    >
+                      {item.title}
+                    </a>
 
-                  <span style="color:#777; font-size:0.85rem;">
-                    {" "}
-                    （{item.genre || "—"}
-                    {item.updatedAt ? ` / ${item.updatedAt}` : ""}
-                    ）
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+                    <span style="color:#777; font-size:0.85rem;">
+                      {" "}
+                      （{item.genre || "—"}
+                      {item.updatedAt ? ` / ${item.updatedAt}` : ""}
+                      ）
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
       </section>
     ))}
+
+    {orphanParticles.length ? (
+      <section style="margin-top:3rem; padding-top:1.2rem; border-top:1px solid rgba(0,0,0,0.12);">
+        <h3 style="margin:0 0 0.6rem; color:#a44;">
+          Orphan particles（contributors未登録）
+        </h3>
+
+        <p style="font-size:0.85rem; color:#777; margin:0 0 1rem;">
+          ※ particles.json に存在するが、contributors.json に contributor 定義がない項目です。
+          contributorキーのタイポ、または contributors 側の追加漏れの可能性があります。
+        </p>
+
+        <ul style="padding-left:1.2rem; margin:0;">
+          {orphanParticles.map((item) => (
+            <li style="margin-bottom:0.6rem;">
+              <div style="font-size:0.9rem;">
+                <strong style="font-weight:600;">{item.contributor}</strong>{" "}
+                —
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="text-decoration:underline; margin-left:0.35rem;"
+                >
+                  {item.title}
+                </a>
+              </div>
+              <div style="color:#777; font-size:0.85rem; margin-top:0.1rem;">
+                {item.genre || "—"} / {item.siteType || "—"}
+                {item.updatedAt ? ` / ${item.updatedAt}` : ""}
+                {item.id ? ` / id:${item.id}` : ""}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null}
   </article>
 </BaseLayout>
