@@ -1,16 +1,6 @@
 ---
 // src/layouts/BaseLayout.astro
 
-import contributors from "../data/contributors.json";
-
-// （JSON import が怒られる環境向けの型付け：なくても動きますがVSCodeが静かになります）
-type ContributorsMap = {
-  [id: string]: {
-    displayName?: string;
-    links?: { [key: string]: string };
-  };
-};
-
 interface Props {
   pageTitle?: string;
   subtitle?: string;
@@ -24,8 +14,6 @@ const {
   showCanvas = true,
   enableLinks = false,
 } = Astro.props;
-
-const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
 ---
 
 <!DOCTYPE html>
@@ -55,29 +43,27 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       header.site-header {
-        padding: 1.6rem 1.5rem 1.2rem;
+        padding: 1.2rem 1.5rem;
         max-width: 960px;
         margin: 0 auto;
         margin-top: 2rem;
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.6rem;
-
         position: relative;
+        height: 64px;
+        display: flex;
+        align-items: center;
       }
 
       .site-title-link {
-        position: static;
-        transform: none;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         display: inline-flex;
         align-items: center;
         text-decoration: none;
       }
 
       .site-logo {
-        height: 130px;
+        height: 168px;
         width: auto;
         display: block;
         opacity: 0.92;
@@ -90,16 +76,16 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       nav.site-nav {
-        position: static;
-        display: flex;
-        justify-content: center;
-        gap: 1.2rem;
+        position: absolute;
+        right: 1.5rem;
+        top: 1.2rem;
       }
 
       nav.site-nav a {
         text-decoration: none;
         color: #666;
-        font-size: 1.15rem;
+        font-size: 1.3rem;
+        margin-left: 1rem;
         position: relative;
         transition: color 0.2s ease;
       }
@@ -124,12 +110,32 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       }
 
       @media (max-width: 600px) {
+        header.site-header {
+          height: auto;
+          padding: 1.5rem 1.2rem 1rem;
+          margin-top: 2rem;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .site-title-link {
+          position: static;
+          transform: none;
+          margin-bottom: 0.3rem;
+        }
+
         .site-logo {
           height: 84px;
         }
 
+        nav.site-nav {
+          position: static;
+          margin-top: 0.4rem;
+        }
+
         nav.site-nav a {
-          font-size: 1.05rem;
+          font-size: 1.2rem;
+          margin-left: 0.6rem;
         }
       }
 
@@ -167,7 +173,8 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       <nav class="site-nav">
         <a href="/about">About</a>
         <a href="/statement">Statement</a>
-        <a href="/contributors">Contributors</a>
+        <a href="/articles">Articles</a>
+        {/* <a href="/contributors">Contributors</a> */}
       </nav>
     </header>
 
@@ -177,13 +184,9 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
 
     <footer class="site-footer">© KoLLOID, 2025–</footer>
 
-    {/* ★ script は常に出す（showCanvas=false のページでも destroy できるように） */}
-    <script
-      type="module"
-      is:inline
-      define:vars={{ CONTRIBUTORS }}
-    >
-      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251228-1";
+    {/* script は常に出す（showCanvas=false のページでも destroy できるように） */}
+    <script type="module" is:inline>
+      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251226-1";
 
       function getFlags() {
         const root = document.body;
@@ -209,27 +212,19 @@ const CONTRIBUTORS: ContributorsMap = contributors as ContributorsMap;
       function initSketch() {
         const { showCanvas, enableLinks } = getFlags();
 
-        // まず掃除
         destroySketch();
-
-        // キャンバスを出さないページはここで終わり
         if (!showCanvas) return;
 
-        // p5 がロードされていない場合は何もしない（安全策）
         if (!window.p5) {
           console.warn("p5 is not loaded (showCanvas=true).");
           return;
         }
 
-        window.__kolloidP5__ = new p5(
-          createKolloidSketch({ enableLinks, contributorsMap: CONTRIBUTORS })
-        );
+        window.__kolloidP5__ = new p5(createKolloidSketch({ enableLinks }));
       }
 
-      // フルロード
       window.addEventListener("DOMContentLoaded", initSketch);
 
-      // Astro の遷移
       document.addEventListener("astro:before-swap", destroySketch);
       document.addEventListener("astro:after-swap", initSketch);
       document.addEventListener("astro:page-load", initSketch);

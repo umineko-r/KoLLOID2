@@ -1,0 +1,83 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import contributors from "../data/contributors.json";
+import articles from "../data/articles.json";
+
+type Contributor = {
+  displayName: string;
+  genres?: string[];
+  links?: Record<string, string>;
+};
+type ContributorsMap = Record<string, Contributor>;
+
+type Article = {
+  id?: string;
+  contributor: string;
+  title: string;
+  link: string;
+  siteType?: string;
+  updatedAt?: string;
+  tags?: string[];
+};
+
+const pageTitle = "Articles | KoLLOID";
+const contributorsMap = contributors as ContributorsMap;
+
+const list = (Array.isArray(articles) ? (articles as Article[]) : [])
+  .filter((a) => a.contributor && a.title && a.link)
+  .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+function displayNameOf(contributorKey: string) {
+  return contributorsMap[contributorKey]?.displayName || contributorKey;
+}
+
+function siteTypeLabel(siteType?: string) {
+  const s = (siteType || "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    note: "note",
+    blog: "Blog",
+    medium: "Medium",
+    zenn: "Zenn",
+    qiita: "Qiita",
+    other: "Other",
+  };
+  return map[s] || (siteType || "—");
+}
+---
+
+<BaseLayout pageTitle={pageTitle} enableLinks={false} showCanvas={false}>
+  <article style="text-align:left; max-width:760px; margin:0 auto;">
+    <h2>Articles</h2>
+
+    <p style="font-size:0.9rem; color:#777; margin:0.3rem 0 1.2rem;">
+      KoLLOID という場所についての文章一覧です。本文は各リンク先にあります。
+    </p>
+
+    {list.length === 0 ? (
+      <p style="color:#888; margin-top:1.2rem;">まだ記事がありません。</p>
+    ) : (
+      <ul style="padding-left:1.2rem; margin:0;">
+        {list.map((a) => (
+          <li style="margin-bottom:0.85rem;">
+            <a
+              href={a.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style="text-decoration:underline;"
+            >
+              {a.title}
+            </a>
+
+            <div style="color:#777; font-size:0.85rem; margin-top:0.15rem;">
+              制作者：{displayNameOf(a.contributor)}
+              {" / "}
+              {siteTypeLabel(a.siteType)}
+              {a.updatedAt ? ` / ${a.updatedAt}` : ""}
+              {a.tags?.length ? ` / ${a.tags.join(", ")}` : ""}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </article>
+</BaseLayout>
