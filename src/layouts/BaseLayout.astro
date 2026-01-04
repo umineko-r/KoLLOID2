@@ -42,21 +42,25 @@ const {
         color: #333;
       }
 
+      /* ★PC/スマホ共通で「ロゴ → メニュー」を縦に積む */
       header.site-header {
-        padding: 1.2rem 1.5rem;
+        padding: 1.6rem 1.5rem 0.2rem;
         max-width: 960px;
         margin: 0 auto;
         margin-top: 2rem;
-        position: relative;
-        height: 64px;
+
         display: flex;
+        flex-direction: column;
         align-items: center;
+        gap: 0.55rem;
+
+        height: auto;
+        position: relative;
       }
 
       .site-title-link {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        position: static;
+        transform: none;
         display: inline-flex;
         align-items: center;
         text-decoration: none;
@@ -75,19 +79,22 @@ const {
         transform: translateY(-1px);
       }
 
+      /* ★メニューは常にロゴ下、中央揃え */
       nav.site-nav {
-        position: absolute;
-        right: 1.5rem;
-        top: 1.2rem;
+        position: static;
+        display: flex;
+        justify-content: center;
+        gap: 1.0rem;
+        flex-wrap: wrap;
       }
 
       nav.site-nav a {
         text-decoration: none;
         color: #666;
-        font-size: 1.3rem;
-        margin-left: 1rem;
+        font-size: 1.2rem;
         position: relative;
         transition: color 0.2s ease;
+        padding: 0.1rem 0.05rem;
       }
 
       nav.site-nav a:hover {
@@ -111,31 +118,17 @@ const {
 
       @media (max-width: 600px) {
         header.site-header {
-          height: auto;
-          padding: 1.5rem 1.2rem 1rem;
+          padding: 1.6rem 1.2rem 0.2rem;
           margin-top: 2rem;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .site-title-link {
-          position: static;
-          transform: none;
-          margin-bottom: 0.3rem;
+          gap: 0.45rem;
         }
 
         .site-logo {
           height: 84px;
         }
 
-        nav.site-nav {
-          position: static;
-          margin-top: 0.4rem;
-        }
-
         nav.site-nav a {
-          font-size: 1.2rem;
-          margin-left: 0.6rem;
+          font-size: 1.1rem;
         }
       }
 
@@ -174,7 +167,7 @@ const {
         <a href="/about">About</a>
         <a href="/statement">Statement</a>
         <a href="/articles">Articles</a>
-        {/* <a href="/contributors">Contributors</a> */}
+        <a href="/contributors">Contributors</a>
       </nav>
     </header>
 
