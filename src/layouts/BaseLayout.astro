@@ -1,7 +1,7 @@
 ---
 // src/layouts/BaseLayout.astro
 
-import contributors from "../data/contributors.json"; // ★追加（displayName変換用）
+import contributors from "../data/contributors.json"; // ★追加（displayName解決用）
 
 interface Props {
   pageTitle?: string;
@@ -86,7 +86,7 @@ const {
         position: static;
         display: flex;
         justify-content: center;
-        gap: 1rem;
+        gap: 1.0rem;
         flex-wrap: wrap;
       }
 
@@ -180,11 +180,12 @@ const {
     <footer class="site-footer">© KoLLOID, 2025–</footer>
 
     {/* script は常に出す（showCanvas=false のページでも destroy できるように） */}
-    <script type="module" is:inline>
-      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251226-1";
-
-      // ★ビルド時に contributors.json を埋め込む（ブラウザでfetchしない）
-      const CONTRIBUTORS = JSON.parse(`${JSON.stringify(contributors)}`);
+    <script
+      type="module"
+      is:inline
+      define:vars={{ contributors }}  /* ★これが肝：contributorsをブラウザへ渡す */
+    >
+      import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251228-genre-1";
 
       function getFlags() {
         const root = document.body;
@@ -218,9 +219,9 @@ const {
           return;
         }
 
-        // ★contributorsMap を渡す（粒子の「制作者：」を displayName にする）
+        // ★contributorsMap を渡す（displayName解決用）
         window.__kolloidP5__ = new p5(
-          createKolloidSketch({ enableLinks, contributorsMap: CONTRIBUTORS })
+          createKolloidSketch({ enableLinks, contributorsMap: contributors })
         );
       }
 
