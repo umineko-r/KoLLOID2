@@ -1,7 +1,7 @@
 {
   "umineko": {
     "displayName": "ウミネコ",
-    "genres":["音楽","短歌","文章"],
+    "genres":["音楽","短歌・和歌","文章"],
     "links": {
       "instagram": "https://www.instagram.com/umineko_soratob/",
       "youtube": "https://www.youtube.com/@songs_of_umineko",
@@ -18,5 +18,15 @@
     "links": {
       "instagram": "https://www.instagram.com/evk38_curry"
     }
+  },
+  "wasuremizukusa": {
+    "displayName": "忘れ水草",
+    "genres":["短歌・和歌","詩","文章"],
+    "links": {
+      "note": "https://note.com/wasuremizukusa"
+    },
+    "feed": [
+      { "siteType": "note",   "genre": "短歌・和歌", "url": "https://note.com/wasuremizukusa/rss" }
+    ]
   }
 }
