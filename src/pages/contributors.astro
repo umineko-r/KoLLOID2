@@ -10,79 +10,12 @@ type Contributor = {
 
 type Entry = [string, Contributor];
 
-/* ===============================
- * 1時間単位の seed shuffle
- * seed = YYYY-MM-DD-HH (JST)
- * =============================== */
-
-// JSTで YYYY-MM-DD-HH を作る
-function getHourSeedJST(): string {
-  const d = new Date();
-  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  const y = jst.getUTCFullYear();
-  const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(jst.getUTCDate()).padStart(2, "0");
-  const h = String(jst.getUTCHours()).padStart(2, "0");
-  return `${y}-${m}-${day}-${h}`;
-}
-
-// seed 文字列 → 数値（FNV-1a 風）
-function hashSeed(str: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
-  }
-  return h >>> 0;
-}
-
-// 擬似乱数（mulberry32）
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// シャッフル
-function shuffle<T>(arr: T[], rand: () => number): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-/* ===============================
- * contributors を分解
- * =============================== */
-
 const entries = Object.entries(contributors) as Entry[];
 
-// 主宰ID（固定）
 const HOST_ID = "umineko";
-
-// 主宰以外
+const host = entries.find(([id]) => id === HOST_ID) ?? null;
 const others = entries.filter(([id]) => id !== HOST_ID);
 
-// 主宰
-const host = entries.find(([id]) => id === HOST_ID);
-
-// seed shuffle 実行
-const seed = getHourSeedJST();
-const rand = mulberry32(hashSeed(seed));
-const shuffledOthers = shuffle(others, rand);
-
-/* 表示順：
- * 1) 主宰以外（ランダム）
- * 2) 主宰（小さく最後）
- */
-const orderedEntries: Entry[] = host ? [...shuffledOthers, host] : shuffledOthers;
-
-/* リンク表示名 */
 const LINK_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
@@ -100,39 +33,39 @@ const LINK_LABELS: Record<string, string> = {
       ※ 表示順は時間ごとに静かに入れ替わります。
     </p>
 
-    {orderedEntries.map(([id, c]) => (
+    {/* ★主宰は先頭に固定（小さく） */}
+    {host && (
       <section
+        data-contributor-section
+        data-id={host[0]}
+        data-host="true"
         style="
-          margin-top: 2.5rem;
+          margin-top: 2.0rem;
           padding-bottom: 2rem;
           border-bottom: 1px solid rgba(0,0,0,0.1);
         "
       >
         <h3 style="margin-bottom: 0.4rem;">
-          {c.displayName}
-          {id === HOST_ID && (
-            <span
-              style="
-                margin-left: 0.5rem;
-                font-size: 0.75rem;
-                color: #888;
-                font-weight: normal;
-              "
-            >
-              （主宰）
-            </span>
-          )}
+          {host[1].displayName}
+          <span
+            style="
+              margin-left: 0.5rem;
+              font-size: 0.75rem;
+              color: #888;
+              font-weight: normal;
+            "
+          >
+            （主宰）
+          </span>
         </h3>
 
-        {/* ジャンル */}
-        {c.genres && (
+        {host[1].genres?.length ? (
           <p style="font-size: 0.9rem; color: #555; margin: 0.3rem 0;">
-            ジャンル：{c.genres.join("／")}
+            ジャンル：{host[1].genres.join("／")}
           </p>
-        )}
+        ) : null}
 
-        {/* リンク（横並び） */}
-        {c.links && (
+        {host[1].links && (
           <div
             style="
               margin-top: 0.6rem;
@@ -142,7 +75,7 @@ const LINK_LABELS: Record<string, string> = {
               font-size: 0.9rem;
             "
           >
-            {Object.entries(c.links).map(([key, url]) => {
+            {Object.entries(host[1].links).map(([key, url]) => {
               const label = LINK_LABELS[key] ?? key;
               return (
                 <a
@@ -162,6 +95,128 @@ const LINK_LABELS: Record<string, string> = {
           </div>
         )}
       </section>
-    ))}
+    )}
+
+    {/* ★主宰以外（ここをブラウザ側でシャッフルする） */}
+    <div id="contributors-others">
+      {others.map(([id, c]) => (
+        <section
+          data-contributor-section
+          data-id={id}
+          style="
+            margin-top: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+          "
+        >
+          <h3 style="margin-bottom: 0.4rem;">
+            {c.displayName}
+          </h3>
+
+          {c.genres?.length ? (
+            <p style="font-size: 0.9rem; color: #555; margin: 0.3rem 0;">
+              ジャンル：{c.genres.join("／")}
+            </p>
+          ) : null}
+
+          {c.links && (
+            <div
+              style="
+                margin-top: 0.6rem;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem 1.2rem;
+                font-size: 0.9rem;
+              "
+            >
+              {Object.entries(c.links).map(([key, url]) => {
+                const label = LINK_LABELS[key] ?? key;
+                return (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="
+                      color: #444;
+                      text-decoration: underline;
+                      white-space: nowrap;
+                    "
+                  >
+                    {label}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+
+    {/* ★ブラウザ側で「1時間seed」シャッフル（Deploy/cronに依存しない） */}
+    <script is:inline>
+      {String.raw`
+        // JSTで YYYY-MM-DD-HH を作る
+        function getHourSeedJST() {
+          const d = new Date();
+          const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+          const y = jst.getUTCFullYear();
+          const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
+          const day = String(jst.getUTCDate()).padStart(2, "0");
+          const h = String(jst.getUTCHours()).padStart(2, "0");
+          return \`\${y}-\${m}-\${day}-\${h}\`;
+        }
+
+        // seed 文字列 → 数値（軽量hash）
+        function hashSeed(str) {
+          let h = 2166136261;
+          for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+          }
+          return h >>> 0;
+        }
+
+        // 擬似乱数（mulberry32）
+        function mulberry32(seed) {
+          return function () {
+            let t = (seed += 0x6d2b79f5);
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        function shuffleInPlace(arr, rand) {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(rand() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        }
+
+        function applyShuffle() {
+          const root = document.getElementById("contributors-others");
+          if (!root) return;
+
+          const sections = Array.from(root.querySelectorAll("[data-contributor-section]"));
+          if (sections.length <= 1) return;
+
+          const seed = getHourSeedJST();
+          const rand = mulberry32(hashSeed(seed));
+          shuffleInPlace(sections, rand);
+
+          // 並べ直し
+          for (const el of sections) root.appendChild(el);
+        }
+
+        // 初回
+        applyShuffle();
+
+        // 1時間を跨いだら自動で入れ替え（ページ開きっぱなし対策）
+        setInterval(() => {
+          applyShuffle();
+        }, 60 * 1000);
+      `}
+    </script>
   </article>
 </BaseLayout>
