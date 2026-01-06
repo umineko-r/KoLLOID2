@@ -26,7 +26,7 @@ function getHourSeedJST(): string {
   return `${y}-${m}-${day}-${h}`;
 }
 
-// seed 文字列 → 数値
+// seed 文字列 → 数値（FNV-1a 風）
 function hashSeed(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -80,9 +80,7 @@ const shuffledOthers = shuffle(others, rand);
  * 1) 主宰以外（ランダム）
  * 2) 主宰（小さく最後）
  */
-const orderedEntries: Entry[] = host
-  ? [...shuffledOthers, host]
-  : shuffledOthers;
+const orderedEntries: Entry[] = host ? [...shuffledOthers, host] : shuffledOthers;
 
 /* リンク表示名 */
 const LINK_LABELS: Record<string, string> = {
@@ -101,7 +99,8 @@ const LINK_LABELS: Record<string, string> = {
     <p style="font-size:0.85rem; color:#777; margin-top:0.3rem;">
       ※ 表示順は時間ごとに静かに入れ替わります。
     </p>
-    {entries.map(([id, c]) => (
+
+    {orderedEntries.map(([id, c]) => (
       <section
         style="
           margin-top: 2.5rem;
