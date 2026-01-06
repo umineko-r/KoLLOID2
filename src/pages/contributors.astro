@@ -16,7 +16,7 @@ const LINK_LABELS: Record<string, string> = {
   threads: "Threads",
   x: "X",
 };
-
+const BUILD_AT = new Date().toISOString();
 // ---------- 並び順制御 ----------
 
 // 主宰ID（固定）
@@ -49,7 +49,9 @@ const entries: [string, Contributor][] = hostEntry
 <BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false} showCanvas={false}>
   <article style="max-width: 720px; margin: 0 auto; text-align: left;">
     <h2>Contributors</h2>
-
+    <p style="font-size:0.8rem; color:#999; margin-top:0.4rem;">
+      build: {BUILD_AT}
+    </p>
     {entries.map(([id, c]) => (
       <section
         style="
