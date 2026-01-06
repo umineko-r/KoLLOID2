@@ -8,6 +8,83 @@ type Contributor = {
   links?: Record<string, string>;
 };
 
+type Entry = [string, Contributor];
+
+/* ===============================
+ * 1時間単位の seed shuffle
+ * seed = YYYY-MM-DD-HH (JST)
+ * =============================== */
+
+// JSTで YYYY-MM-DD-HH を作る
+function getHourSeedJST(): string {
+  const d = new Date();
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const y = jst.getUTCFullYear();
+  const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(jst.getUTCDate()).padStart(2, "0");
+  const h = String(jst.getUTCHours()).padStart(2, "0");
+  return `${y}-${m}-${day}-${h}`;
+}
+
+// seed 文字列 → 数値
+function hashSeed(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return h >>> 0;
+}
+
+// 擬似乱数（mulberry32）
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// シャッフル
+function shuffle<T>(arr: T[], rand: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ===============================
+ * contributors を分解
+ * =============================== */
+
+const entries = Object.entries(contributors) as Entry[];
+
+// 主宰ID（固定）
+const HOST_ID = "umineko";
+
+// 主宰以外
+const others = entries.filter(([id]) => id !== HOST_ID);
+
+// 主宰
+const host = entries.find(([id]) => id === HOST_ID);
+
+// seed shuffle 実行
+const seed = getHourSeedJST();
+const rand = mulberry32(hashSeed(seed));
+const shuffledOthers = shuffle(others, rand);
+
+/* 表示順：
+ * 1) 主宰以外（ランダム）
+ * 2) 主宰（小さく最後）
+ */
+const orderedEntries: Entry[] = host
+  ? [...shuffledOthers, host]
+  : shuffledOthers;
+
+/* リンク表示名 */
 const LINK_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
@@ -16,42 +93,12 @@ const LINK_LABELS: Record<string, string> = {
   threads: "Threads",
   x: "X",
 };
-const BUILD_AT = new Date().toISOString();
-// ---------- 並び順制御 ----------
-
-// 主宰ID（固定）
-const HOST_ID = "umineko";
-
-// entries を分解
-const allEntries = Object.entries(contributors) as [string, Contributor][];
-
-const hostEntry = allEntries.find(([id]) => id === HOST_ID) ?? null;
-const otherEntries = allEntries.filter(([id]) => id !== HOST_ID);
-
-// シャッフル（Fisher–Yates）
-function shuffle<T>(array: T[]): T[] {
-  const a = [...array];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-const shuffledOthers = shuffle(otherEntries);
-
-// 表示用配列：主宰 → ランダム参加者
-const entries: [string, Contributor][] = hostEntry
-  ? [hostEntry, ...shuffledOthers]
-  : shuffledOthers;
 ---
 
 <BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false} showCanvas={false}>
   <article style="max-width: 720px; margin: 0 auto; text-align: left;">
     <h2>Contributors</h2>
-    <p style="font-size:0.8rem; color:#999; margin-top:0.4rem;">
-      build: {BUILD_AT}
-    </p>
+
     {entries.map(([id, c]) => (
       <section
         style="
