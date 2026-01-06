@@ -28,5 +28,14 @@
     "feed": [
       { "siteType": "note",   "genre": "短歌・和歌", "url": "https://note.com/wasuremizukusa/rss" }
     ]
+  },
+  "towamariko":{
+    "displayName": "永遠万里子",
+    "genres":["短歌・和歌","文章","映像"],
+    "links": {
+      "instagram": "https://www.instagram.com/edgeleganceccentric",
+      "threads":"https://www.threads.com/@edgeleganceccentric",
+      "x":"https://x.com/marikotowa"
+    }
   }
 }

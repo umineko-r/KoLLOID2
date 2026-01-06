@@ -8,14 +8,42 @@ type Contributor = {
   links?: Record<string, string>;
 };
 
-const entries = Object.entries(contributors) as [string, Contributor][];
-
 const LINK_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
   facebook: "Facebook",
   note: "note",
+  threads: "Threads",
+  x: "X",
 };
+
+// ---------- 並び順制御 ----------
+
+// 主宰ID（固定）
+const HOST_ID = "umineko";
+
+// entries を分解
+const allEntries = Object.entries(contributors) as [string, Contributor][];
+
+const hostEntry = allEntries.find(([id]) => id === HOST_ID) ?? null;
+const otherEntries = allEntries.filter(([id]) => id !== HOST_ID);
+
+// シャッフル（Fisher–Yates）
+function shuffle<T>(array: T[]): T[] {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const shuffledOthers = shuffle(otherEntries);
+
+// 表示用配列：主宰 → ランダム参加者
+const entries: [string, Contributor][] = hostEntry
+  ? [hostEntry, ...shuffledOthers]
+  : shuffledOthers;
 ---
 
 <BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false} showCanvas={false}>
@@ -32,16 +60,28 @@ const LINK_LABELS: Record<string, string> = {
       >
         <h3 style="margin-bottom: 0.4rem;">
           {c.displayName}
+          {id === HOST_ID && (
+            <span
+              style="
+                margin-left: 0.5rem;
+                font-size: 0.75rem;
+                color: #888;
+                font-weight: normal;
+              "
+            >
+              （主宰）
+            </span>
+          )}
         </h3>
 
         {/* ジャンル */}
         {c.genres && (
           <p style="font-size: 0.9rem; color: #555; margin: 0.3rem 0;">
-            ジャンル：{c.genres.join("・")}
+            ジャンル：{c.genres.join("／")}
           </p>
         )}
 
-        {/* ★リンク（横並び） */}
+        {/* リンク（横並び） */}
         {c.links && (
           <div
             style="
