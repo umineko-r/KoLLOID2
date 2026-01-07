@@ -26,7 +26,7 @@ const entries = Object.entries(contributors) as Entry[];
 // 主宰ID（固定）
 const HOST_ID = "umineko";
 
-// 主宰以外（SSRは安定順で出しておき、初回アクセス時にJSで並べ替える）
+// 主宰以外（SSRは安定順。表示時にJSで毎回ランダム化）
 const others = entries
   .filter(([id]) => id !== HOST_ID)
   .sort((a, b) => a[0].localeCompare(b[0]));
@@ -40,10 +40,10 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
     <h2>Contributors</h2>
 
     <p style="font-size:0.85rem; color:#777; margin-top:0.3rem;">
-      ※ 表示順は初回アクセス時に静かに決まります。
+      ※ 表示順は、ページを表示するたびに静かに変わります。
     </p>
 
-    {/* 主宰以外：初回アクセス時に並べ替える（チラつき防止で最初は非表示） */}
+    {/* 主宰以外：表示時に毎回ランダマイズ（チラつき防止で最初は非表示） */}
     <div id="contributors-others" style="visibility:hidden;">
       {others.map(([id, c]) => (
         <section
@@ -65,7 +65,7 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
             </p>
           ) : null}
 
-          {/* リンク（横並び） */}
+          {/* リンク */}
           {c.links ? (
             <div
               style="
@@ -146,7 +146,7 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
                     white-space: nowrap;
                   "
                 >
-                  {label}
+                    {label}
                 </a>
               );
             })}
@@ -156,24 +156,13 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
     ) : null}
   </article>
 
-  {/* 初回アクセスだけシャッフル（主宰以外）
-      - チラつき防止：並べ替え完了まで #contributors-others を非表示
-      - contributors増減に追従：
-          削除IDは落とす
-          追加IDは「既存orderのランダム位置に挿入」して混ぜる
-  */}
+  {/* 毎回ランダマイズ（localStorage不使用） */}
   <script is:inline>
     (function () {
-      const STORAGE_KEY = "kolloid_contributors_order_v1";
       const root = document.getElementById("contributors-others");
       if (!root) return;
 
       const sections = Array.from(root.querySelectorAll("section[data-id]"));
-      const ids = sections
-        .map((el) => el.getAttribute("data-id"))
-        .filter(Boolean);
-
-      // 0-1件なら並べ替え不要（表示だけ戻す）
       if (sections.length <= 1) {
         root.style.visibility = "visible";
         return;
@@ -190,88 +179,14 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
         return a;
       }
 
-      // ★追加分をランダム位置に挿入
-      function insertRandomly(base, additions) {
-        const out = base.slice();
-        const add = shuffle(additions);
-        for (const id of add) {
-          const idx = Math.floor(Math.random() * (out.length + 1)); // 0..len
-          out.splice(idx, 0, id);
-        }
-        return out;
+      // 表示のたびにシャッフル
+      const shuffled = shuffle(sections);
+      for (const el of shuffled) {
+        root.appendChild(el);
       }
 
-      function applyOrder(order) {
-        const byId = new Map();
-        sections.forEach((el) => {
-          const id = el.getAttribute("data-id");
-          if (id) byId.set(id, el);
-        });
-
-        // 指定順に append（DOMの順番が変わる）
-        order.forEach((id) => {
-          const el = byId.get(id);
-          if (el) root.appendChild(el);
-        });
-
-        // 並び替え完了後に表示
-        root.style.visibility = "visible";
-      }
-
-      function safeParse(json) {
-        try {
-          return JSON.parse(json);
-        } catch {
-          return null;
-        }
-      }
-
-      // 既存の保存順を読む
-      let order = null;
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        const parsed = saved ? safeParse(saved) : null;
-        if (Array.isArray(parsed)) {
-          order = parsed.filter((x) => typeof x === "string");
-        }
-      } catch (e) {
-        // 読めない場合は初回扱い
-      }
-
-      const currentSet = new Set(ids);
-
-      // 初回（または壊れている）なら新規生成
-      if (!order || order.length === 0) {
-        order = shuffle(ids);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
-        } catch (e) {
-          // 保存できなくても表示だけ反映
-        }
-        applyOrder(order);
-        return;
-      }
-
-      // 1) 削除されたIDを落とす
-      order = order.filter((id) => currentSet.has(id));
-
-      // 2) 追加されたIDを拾う
-      const orderSet = new Set(order);
-      const missing = ids.filter((id) => !orderSet.has(id));
-
-      if (missing.length > 0) {
-        // ★既存順に対して、追加分をランダム位置に挿入して混ぜる
-        order = insertRandomly(order, missing);
-
-        // 保存し直す（可能なら）
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
-        } catch (e) {
-          // 保存できなくても表示だけ反映
-        }
-      }
-
-      applyOrder(order);
+      // 並び替え完了後に表示（チラつき防止）
+      root.style.visibility = "visible";
     })();
   </script>
 </BaseLayout>
