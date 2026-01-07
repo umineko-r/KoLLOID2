@@ -1,5 +1,68 @@
 [
   {
+    "id": "wasuremizukusa-note-f44b86805748ae9f",
+    "contributor": "wasuremizukusa",
+    "title": "一富士二鷹",
+    "link": "https://note.com/wasuremizukusa/n/ncab5f8bee5c2",
+    "genre": "短歌・和歌",
+    "siteType": "note",
+    "updatedAt": "2026-01-06"
+  },
+  {
+    "id": "wasuremizukusa-note-0af94bccbc47be3c",
+    "contributor": "wasuremizukusa",
+    "title": "箱根駅伝",
+    "link": "https://note.com/wasuremizukusa/n/n6e14e4cd3877",
+    "genre": "短歌・和歌",
+    "siteType": "note",
+    "updatedAt": "2026-01-05"
+  },
+  {
+    "id": "umineko-note-1432b85fdccc1f17",
+    "contributor": "umineko",
+    "title": "思想としてのKoLLOID ver.1 ―ビッグ・ブラザーはいつも見ている―",
+    "link": "https://note.com/umineko_note/n/n85a0bd62be57",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2026-01-04"
+  },
+  {
+    "id": "wasuremizukusa-note-012d43b3c1a0c2f3",
+    "contributor": "wasuremizukusa",
+    "title": "序文",
+    "link": "https://note.com/wasuremizukusa/n/nb4a88944c6f4",
+    "genre": "短歌・和歌",
+    "siteType": "note",
+    "updatedAt": "2026-01-04"
+  },
+  {
+    "id": "umineko-note-9900db709db3f66a",
+    "contributor": "umineko",
+    "title": "短歌集（2025.12後半）",
+    "link": "https://note.com/umineko_note/n/ndf7fb2c117c7",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-31"
+  },
+  {
+    "id": "umineko-note-a435c95a2d2b42f9",
+    "contributor": "umineko",
+    "title": "連作短歌「雪」",
+    "link": "https://note.com/umineko_note/n/na3f69efcb142",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-24"
+  },
+  {
+    "id": "umineko-note-499db7361013da22",
+    "contributor": "umineko",
+    "title": "KoLLOID Statement ―KoLLOIDをKoLLOIDとして維持するために―",
+    "link": "https://note.com/umineko_note/n/ncfc7b5b76e5c",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-23"
+  },
+  {
     "id": "k-0003",
     "contributor": "umineko",
     "title": "短歌『雪の華』",
@@ -8,6 +71,24 @@
     "siteType": "instagram",
     "account": "umineko_soratob",
     "updatedAt": "2025-12-21"
+  },
+  {
+    "id": "umineko-note-27ac51a274d77087",
+    "contributor": "umineko",
+    "title": "短歌集（2025.12前半）",
+    "link": "https://note.com/umineko_note/n/n4563f856ea8f",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-17"
+  },
+  {
+    "id": "umineko-note-693b1deb8c79c9b4",
+    "contributor": "umineko",
+    "title": "KoLLOID ―溶けきらない「個」の表現―",
+    "link": "https://note.com/umineko_note/n/nda675a59c78e",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-10"
   },
   {
     "id": "k-0002",
@@ -20,6 +101,15 @@
     "updatedAt": "2025-12-06"
   },
   {
+    "id": "umineko-note-703f5c244f1e3da5",
+    "contributor": "umineko",
+    "title": "連作短歌「ぼく〈冬〉」",
+    "link": "https://note.com/umineko_note/n/ne86737f48195",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-06"
+  },
+  {
     "id": "k-0001",
     "contributor": "umineko",
     "title": "連作短歌『君〈冬〉』",
@@ -28,6 +118,33 @@
     "siteType": "instagram",
     "account": "umineko_soratob",
     "updatedAt": "2025-12-05"
+  },
+  {
+    "id": "umineko-note-de4e275b3fe4ec3c",
+    "contributor": "umineko",
+    "title": "連作短歌「君〈冬〉」",
+    "link": "https://note.com/umineko_note/n/nef58a2d671af",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-05"
+  },
+  {
+    "id": "umineko-note-ec90db1ea91069dc",
+    "contributor": "umineko",
+    "title": "短歌集（2025.10〜2025.11）",
+    "link": "https://note.com/umineko_note/n/n759ad9670705",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-12-01"
+  },
+  {
+    "id": "umineko-note-ff09c419497aec3c",
+    "contributor": "umineko",
+    "title": "短歌集（2023.01〜2025.10）",
+    "link": "https://note.com/umineko_note/n/nd9a697f29925",
+    "genre": "文章",
+    "siteType": "note",
+    "updatedAt": "2025-11-03"
   },
   {
     "id": "k-0004",
@@ -50,7 +167,7 @@
     "updatedAt": "2024-12-14"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-c95a8afe3519ffba",
     "contributor": "umineko",
     "title": "カバー：「サヨナラCOLOR（SUPER BUTTER DOG）」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=3H3ck7dHPwE",
@@ -59,7 +176,7 @@
     "updatedAt": "2023-10-09"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-ae26e441e3d8e414",
     "contributor": "umineko",
     "title": "カバー：「君が誰かの彼女になりくさっても（天才バンド；奇妙礼太郎）」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=y6p9no2NB1g",
@@ -68,7 +185,7 @@
     "updatedAt": "2023-10-09"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-ce1233ebbfe4aa7a",
     "contributor": "umineko",
     "title": "「幸せになれますように」by ウミネコ（4.23.2023 Rec.）",
     "link": "https://www.youtube.com/watch?v=1oHDYK4OTuU",
@@ -77,7 +194,7 @@
     "updatedAt": "2023-04-23"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-3274507f0013bd39",
     "contributor": "umineko",
     "title": "（カバー）「小さな恋のうた（MONGOL800）」covered by ウミネコ",
     "link": "https://www.youtube.com/watch?v=a4qOzYQ9UnQ",
@@ -86,7 +203,7 @@
     "updatedAt": "2022-10-30"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-e6f4df192516e992",
     "contributor": "umineko",
     "title": "「猫、それとひとりの生活」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=6h8BaRArfUY",
@@ -95,7 +212,7 @@
     "updatedAt": "2022-10-30"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-e58488a76e99cb3a",
     "contributor": "umineko",
     "title": "「A broken」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=u1qhbPzSrEo",
@@ -104,7 +221,7 @@
     "updatedAt": "2022-08-28"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-fb3cf98e1f031806",
     "contributor": "umineko",
     "title": "「うたをかく」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=Df2Hz4kKggs",
@@ -113,7 +230,7 @@
     "updatedAt": "2022-07-03"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-046d80923cbb82a7",
     "contributor": "umineko",
     "title": "（カバー）「五月雨（踊ってばかりの国）」covered by ウミネコ",
     "link": "https://www.youtube.com/watch?v=wVBynjueZb8",
@@ -122,7 +239,7 @@
     "updatedAt": "2022-07-03"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-6aff9363fc270839",
     "contributor": "umineko",
     "title": "「かたおもい」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=pWBAjuvY_-g",
@@ -131,7 +248,7 @@
     "updatedAt": "2022-02-14"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-0da9c1968e20b28f",
     "contributor": "umineko",
     "title": "「ライフ」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=8kI2RN_-Qs4",
@@ -140,7 +257,7 @@
     "updatedAt": "2022-01-30"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-47bc79f24d4d0427",
     "contributor": "umineko",
     "title": "「吐く息は白い」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=9ToCT40hzno",
@@ -149,7 +266,7 @@
     "updatedAt": "2021-12-27"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-4b5a9194a93f522c",
     "contributor": "umineko",
     "title": "「不完全な冬」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=iXMNSAJ3BDw",
@@ -158,7 +275,7 @@
     "updatedAt": "2021-11-30"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-0d56e7ecef97fdf5",
     "contributor": "umineko",
     "title": "「秋風（2021）」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=XyEe-ffQyOQ",
@@ -167,7 +284,7 @@
     "updatedAt": "2021-11-14"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-ff8aff93d5b14225",
     "contributor": "umineko",
     "title": "「海猫」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=ZGNrU9QP0w8",
@@ -176,7 +293,7 @@
     "updatedAt": "2021-09-26"
   },
   {
-    "id": "umineko-youtube-aHR0cHM6Ly93",
+    "id": "umineko-youtube-9921127b55878afb",
     "contributor": "umineko",
     "title": "「さみしさのりゆう」 by ウミネコ",
     "link": "https://www.youtube.com/watch?v=jZmZxFyGvjU",
