@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import Parser from "rss-parser";
+import crypto from "node:crypto";
 
 const parser = new Parser();
 
@@ -21,9 +22,14 @@ function toYMD(dateLike) {
 }
 
 function stableId(contributor, siteType, link) {
-  // linkから短い安定IDを作る（内容が変わっても同一リンクなら同一ID）
-  const base = Buffer.from(link).toString("base64url").slice(0, 12);
-  return `${contributor}-${siteType}-${base}`;
+  // link から十分ユニークな短IDを作る（base64切り詰めによる衝突を回避）
+  const digest = crypto
+    .createHash("sha1")
+    .update(link)
+    .digest("hex")
+    .slice(0, 16);
+
+  return `${contributor}-${siteType}-${digest}`;
 }
 
 function normalizeFeedItem(feedDef, item) {
@@ -91,15 +97,21 @@ async function main() {
         const p = normalizeFeedItem(fd, item);
         if (p) fetched.push(p);
       }
-      console.log(`[update] ok: ${fd.contributor} ${fd.siteType} -> ${items.length} items`);
+      console.log(
+        `[update] ok: ${fd.contributor} ${fd.siteType} -> ${items.length} items`
+      );
     } catch (e) {
-      console.warn(`[update] failed: ${fd.contributor} ${fd.siteType} ${fd.url}`);
+      console.warn(
+        `[update] failed: ${fd.contributor} ${fd.siteType} ${fd.url}`
+      );
       console.warn(e);
     }
   }
 
   // 既存particlesとマージ（手動分がある場合）
-  const existing = MERGE_WITH_EXISTING ? await readJsonSafe(OUT_PATH, []) : [];
+  const existing = MERGE_WITH_EXISTING
+    ? await readJsonSafe(OUT_PATH, [])
+    : [];
   const existingArr = Array.isArray(existing) ? existing : [];
 
   // linkで一意化（重複防止）

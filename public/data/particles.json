@@ -1,68 +1,5 @@
 [
   {
-    "id": "wasuremizukusa-note-aHR0cHM6Ly9u",
-    "contributor": "wasuremizukusa",
-    "title": "一富士二鷹",
-    "link": "https://note.com/wasuremizukusa/n/ncab5f8bee5c2",
-    "genre": "短歌・和歌",
-    "siteType": "note",
-    "updatedAt": "2026-01-06"
-  },
-  {
-    "id": "wasuremizukusa-note-aHR0cHM6Ly9u",
-    "contributor": "wasuremizukusa",
-    "title": "箱根駅伝",
-    "link": "https://note.com/wasuremizukusa/n/n6e14e4cd3877",
-    "genre": "短歌・和歌",
-    "siteType": "note",
-    "updatedAt": "2026-01-05"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "思想としてのKoLLOID ver.1 ―ビッグ・ブラザーはいつも見ている―",
-    "link": "https://note.com/umineko_note/n/n85a0bd62be57",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2026-01-04"
-  },
-  {
-    "id": "wasuremizukusa-note-aHR0cHM6Ly9u",
-    "contributor": "wasuremizukusa",
-    "title": "序文",
-    "link": "https://note.com/wasuremizukusa/n/nb4a88944c6f4",
-    "genre": "短歌・和歌",
-    "siteType": "note",
-    "updatedAt": "2026-01-04"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "短歌集（2025.12後半）",
-    "link": "https://note.com/umineko_note/n/ndf7fb2c117c7",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-31"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "連作短歌「雪」",
-    "link": "https://note.com/umineko_note/n/na3f69efcb142",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-24"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "KoLLOID Statement ―KoLLOIDをKoLLOIDとして維持するために―",
-    "link": "https://note.com/umineko_note/n/ncfc7b5b76e5c",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-23"
-  },
-  {
     "id": "k-0003",
     "contributor": "umineko",
     "title": "短歌『雪の華』",
@@ -71,24 +8,6 @@
     "siteType": "instagram",
     "account": "umineko_soratob",
     "updatedAt": "2025-12-21"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "短歌集（2025.12前半）",
-    "link": "https://note.com/umineko_note/n/n4563f856ea8f",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-17"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "KoLLOID ―溶けきらない「個」の表現―",
-    "link": "https://note.com/umineko_note/n/nda675a59c78e",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-10"
   },
   {
     "id": "k-0002",
@@ -101,15 +20,6 @@
     "updatedAt": "2025-12-06"
   },
   {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "連作短歌「ぼく〈冬〉」",
-    "link": "https://note.com/umineko_note/n/ne86737f48195",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-06"
-  },
-  {
     "id": "k-0001",
     "contributor": "umineko",
     "title": "連作短歌『君〈冬〉』",
@@ -118,33 +28,6 @@
     "siteType": "instagram",
     "account": "umineko_soratob",
     "updatedAt": "2025-12-05"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "連作短歌「君〈冬〉」",
-    "link": "https://note.com/umineko_note/n/nef58a2d671af",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-05"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "短歌集（2025.10〜2025.11）",
-    "link": "https://note.com/umineko_note/n/n759ad9670705",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-12-01"
-  },
-  {
-    "id": "umineko-note-aHR0cHM6Ly9u",
-    "contributor": "umineko",
-    "title": "短歌集（2023.01〜2025.10）",
-    "link": "https://note.com/umineko_note/n/nd9a697f29925",
-    "genre": "文章",
-    "siteType": "note",
-    "updatedAt": "2025-11-03"
   },
   {
     "id": "k-0004",
