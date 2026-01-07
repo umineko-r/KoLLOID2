@@ -26,7 +26,7 @@ const entries = Object.entries(contributors) as Entry[];
 // 主宰ID（固定）
 const HOST_ID = "umineko";
 
-// 主宰以外（初期表示はとりあえず安定順）
+// 主宰以外（SSRは安定順で出しておき、初回アクセス時にJSで並べ替える）
 const others = entries
   .filter(([id]) => id !== HOST_ID)
   .sort((a, b) => a[0].localeCompare(b[0]));
@@ -43,8 +43,8 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
       ※ 表示順は初回アクセス時に静かに決まります。
     </p>
 
-    {/* 主宰以外：ここを初回アクセス時に並べ替える */}
-    <div id="contributors-others">
+    {/* 主宰以外：初回アクセス時に並べ替える（チラつき防止で最初は非表示） */}
+    <div id="contributors-others" style="visibility:hidden;">
       {others.map(([id, c]) => (
         <section
           data-id={id}
@@ -156,7 +156,12 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
     ) : null}
   </article>
 
-  {/* 初回アクセスだけシャッフル（主宰以外） */}
+  {/* 初回アクセスだけシャッフル（主宰以外）
+      - チラつき防止：並べ替え完了まで #contributors-others を非表示
+      - contributors増減に追従：
+          削除IDは落とす
+          追加IDは「既存orderのランダム位置に挿入」して混ぜる
+  */}
   <script is:inline>
     (function () {
       const STORAGE_KEY = "kolloid_contributors_order_v1";
@@ -164,11 +169,15 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
       if (!root) return;
 
       const sections = Array.from(root.querySelectorAll("section[data-id]"));
-      if (sections.length <= 1) return;
-
       const ids = sections
         .map((el) => el.getAttribute("data-id"))
         .filter(Boolean);
+
+      // 0-1件なら並べ替え不要（表示だけ戻す）
+      if (sections.length <= 1) {
+        root.style.visibility = "visible";
+        return;
+      }
 
       function shuffle(arr) {
         const a = arr.slice();
@@ -179,6 +188,17 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
           a[j] = tmp;
         }
         return a;
+      }
+
+      // ★追加分をランダム位置に挿入
+      function insertRandomly(base, additions) {
+        const out = base.slice();
+        const add = shuffle(additions);
+        for (const id of add) {
+          const idx = Math.floor(Math.random() * (out.length + 1)); // 0..len
+          out.splice(idx, 0, id);
+        }
+        return out;
       }
 
       function applyOrder(order) {
@@ -193,29 +213,64 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
           const el = byId.get(id);
           if (el) root.appendChild(el);
         });
+
+        // 並び替え完了後に表示
+        root.style.visibility = "visible";
       }
 
-      // 保存済み order があればそれを使う
+      function safeParse(json) {
+        try {
+          return JSON.parse(json);
+        } catch {
+          return null;
+        }
+      }
+
+      // 既存の保存順を読む
+      let order = null;
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const order = JSON.parse(saved);
-          if (Array.isArray(order) && order.length) {
-            applyOrder(order);
-            return;
-          }
+        const parsed = saved ? safeParse(saved) : null;
+        if (Array.isArray(parsed)) {
+          order = parsed.filter((x) => typeof x === "string");
         }
       } catch (e) {
-        // 無視して新規生成へ
+        // 読めない場合は初回扱い
       }
 
-      // 初回：ランダム順を作って保存
-      const order = shuffle(ids);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
-      } catch (e) {
-        // 保存できなくても表示だけはランダムにする
+      const currentSet = new Set(ids);
+
+      // 初回（または壊れている）なら新規生成
+      if (!order || order.length === 0) {
+        order = shuffle(ids);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+        } catch (e) {
+          // 保存できなくても表示だけ反映
+        }
+        applyOrder(order);
+        return;
       }
+
+      // 1) 削除されたIDを落とす
+      order = order.filter((id) => currentSet.has(id));
+
+      // 2) 追加されたIDを拾う
+      const orderSet = new Set(order);
+      const missing = ids.filter((id) => !orderSet.has(id));
+
+      if (missing.length > 0) {
+        // ★既存順に対して、追加分をランダム位置に挿入して混ぜる
+        order = insertRandomly(order, missing);
+
+        // 保存し直す（可能なら）
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+        } catch (e) {
+          // 保存できなくても表示だけ反映
+        }
+      }
+
       applyOrder(order);
     })();
   </script>
