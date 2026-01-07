@@ -10,12 +10,7 @@ type Contributor = {
 
 type Entry = [string, Contributor];
 
-const entries = Object.entries(contributors) as Entry[];
-
-const HOST_ID = "umineko";
-const host = entries.find(([id]) => id === HOST_ID) ?? null;
-const others = entries.filter(([id]) => id !== HOST_ID);
-
+/* リンク表示名 */
 const LINK_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
@@ -24,84 +19,34 @@ const LINK_LABELS: Record<string, string> = {
   threads: "Threads",
   x: "X",
 };
+
+/* contributors を分解 */
+const entries = Object.entries(contributors) as Entry[];
+
+// 主宰ID（固定）
+const HOST_ID = "umineko";
+
+// 主宰以外（初期表示はとりあえず安定順）
+const others = entries
+  .filter(([id]) => id !== HOST_ID)
+  .sort((a, b) => a[0].localeCompare(b[0]));
+
+// 主宰（固定表示）
+const host = entries.find(([id]) => id === HOST_ID) ?? null;
 ---
 
 <BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false} showCanvas={false}>
   <article style="max-width: 720px; margin: 0 auto; text-align: left;">
     <h2>Contributors</h2>
+
     <p style="font-size:0.85rem; color:#777; margin-top:0.3rem;">
-      ※ 表示順は時間ごとに静かに入れ替わります。
+      ※ 表示順は初回アクセス時に静かに決まります。
     </p>
 
-    {/* ★主宰は先頭に固定（小さく） */}
-    {host && (
-      <section
-        data-contributor-section
-        data-id={host[0]}
-        data-host="true"
-        style="
-          margin-top: 2.0rem;
-          padding-bottom: 2rem;
-          border-bottom: 1px solid rgba(0,0,0,0.1);
-        "
-      >
-        <h3 style="margin-bottom: 0.4rem;">
-          {host[1].displayName}
-          <span
-            style="
-              margin-left: 0.5rem;
-              font-size: 0.75rem;
-              color: #888;
-              font-weight: normal;
-            "
-          >
-            （主宰）
-          </span>
-        </h3>
-
-        {host[1].genres?.length ? (
-          <p style="font-size: 0.9rem; color: #555; margin: 0.3rem 0;">
-            ジャンル：{host[1].genres.join("／")}
-          </p>
-        ) : null}
-
-        {host[1].links && (
-          <div
-            style="
-              margin-top: 0.6rem;
-              display: flex;
-              flex-wrap: wrap;
-              gap: 0.8rem 1.2rem;
-              font-size: 0.9rem;
-            "
-          >
-            {Object.entries(host[1].links).map(([key, url]) => {
-              const label = LINK_LABELS[key] ?? key;
-              return (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style="
-                    color: #444;
-                    text-decoration: underline;
-                    white-space: nowrap;
-                  "
-                >
-                  {label}
-                </a>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    )}
-
-    {/* ★主宰以外（ここをブラウザ側でシャッフルする） */}
+    {/* 主宰以外：ここを初回アクセス時に並べ替える */}
     <div id="contributors-others">
       {others.map(([id, c]) => (
         <section
-          data-contributor-section
           data-id={id}
           style="
             margin-top: 2.5rem;
@@ -113,13 +58,15 @@ const LINK_LABELS: Record<string, string> = {
             {c.displayName}
           </h3>
 
+          {/* ジャンル */}
           {c.genres?.length ? (
             <p style="font-size: 0.9rem; color: #555; margin: 0.3rem 0;">
               ジャンル：{c.genres.join("／")}
             </p>
           ) : null}
 
-          {c.links && (
+          {/* リンク（横並び） */}
+          {c.links ? (
             <div
               style="
                 margin-top: 0.6rem;
@@ -147,76 +94,129 @@ const LINK_LABELS: Record<string, string> = {
                 );
               })}
             </div>
-          )}
+          ) : null}
         </section>
       ))}
     </div>
 
-    {/* ★ブラウザ側で「1時間seed」シャッフル（Deploy/cronに依存しない） */}
-    <script is:inline>
-      {String.raw`
-        // JSTで YYYY-MM-DD-HH を作る
-        function getHourSeedJST() {
-          const d = new Date();
-          const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-          const y = jst.getUTCFullYear();
-          const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
-          const day = String(jst.getUTCDate()).padStart(2, "0");
-          const h = String(jst.getUTCHours()).padStart(2, "0");
-          return \`\${y}-\${m}-\${day}-\${h}\`;
-        }
+    {/* 主宰：固定（最後に小さく） */}
+    {host ? (
+      <section style="margin-top: 2.2rem; padding-top: 0.2rem;">
+        <h3 style="margin-bottom: 0.4rem; font-size: 1.05rem;">
+          {host[1].displayName}
+          <span
+            style="
+              margin-left: 0.5rem;
+              font-size: 0.75rem;
+              color: #888;
+              font-weight: normal;
+            "
+          >
+            （主宰）
+          </span>
+        </h3>
 
-        // seed 文字列 → 数値（軽量hash）
-        function hashSeed(str) {
-          let h = 2166136261;
-          for (let i = 0; i < str.length; i++) {
-            h ^= str.charCodeAt(i);
-            h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
-          }
-          return h >>> 0;
-        }
+        {host[1].genres?.length ? (
+          <p style="font-size: 0.85rem; color: #666; margin: 0.2rem 0;">
+            ジャンル：{host[1].genres.join("／")}
+          </p>
+        ) : null}
 
-        // 擬似乱数（mulberry32）
-        function mulberry32(seed) {
-          return function () {
-            let t = (seed += 0x6d2b79f5);
-            t = Math.imul(t ^ (t >>> 15), t | 1);
-            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-          };
-        }
-
-        function shuffleInPlace(arr, rand) {
-          for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(rand() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-          }
-          return arr;
-        }
-
-        function applyShuffle() {
-          const root = document.getElementById("contributors-others");
-          if (!root) return;
-
-          const sections = Array.from(root.querySelectorAll("[data-contributor-section]"));
-          if (sections.length <= 1) return;
-
-          const seed = getHourSeedJST();
-          const rand = mulberry32(hashSeed(seed));
-          shuffleInPlace(sections, rand);
-
-          // 並べ直し
-          for (const el of sections) root.appendChild(el);
-        }
-
-        // 初回
-        applyShuffle();
-
-        // 1時間を跨いだら自動で入れ替え（ページ開きっぱなし対策）
-        setInterval(() => {
-          applyShuffle();
-        }, 60 * 1000);
-      `}
-    </script>
+        {host[1].links ? (
+          <div
+            style="
+              margin-top: 0.5rem;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.7rem 1.1rem;
+              font-size: 0.85rem;
+              color: #666;
+            "
+          >
+            {Object.entries(host[1].links).map(([key, url]) => {
+              const label = LINK_LABELS[key] ?? key;
+              return (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="
+                    color: #444;
+                    text-decoration: underline;
+                    white-space: nowrap;
+                  "
+                >
+                  {label}
+                </a>
+              );
+            })}
+          </div>
+        ) : null}
+      </section>
+    ) : null}
   </article>
+
+  {/* 初回アクセスだけシャッフル（主宰以外） */}
+  <script is:inline>
+    (function () {
+      const STORAGE_KEY = "kolloid_contributors_order_v1";
+      const root = document.getElementById("contributors-others");
+      if (!root) return;
+
+      const sections = Array.from(root.querySelectorAll("section[data-id]"));
+      if (sections.length <= 1) return;
+
+      const ids = sections
+        .map((el) => el.getAttribute("data-id"))
+        .filter(Boolean);
+
+      function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const tmp = a[i];
+          a[i] = a[j];
+          a[j] = tmp;
+        }
+        return a;
+      }
+
+      function applyOrder(order) {
+        const byId = new Map();
+        sections.forEach((el) => {
+          const id = el.getAttribute("data-id");
+          if (id) byId.set(id, el);
+        });
+
+        // 指定順に append（DOMの順番が変わる）
+        order.forEach((id) => {
+          const el = byId.get(id);
+          if (el) root.appendChild(el);
+        });
+      }
+
+      // 保存済み order があればそれを使う
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const order = JSON.parse(saved);
+          if (Array.isArray(order) && order.length) {
+            applyOrder(order);
+            return;
+          }
+        }
+      } catch (e) {
+        // 無視して新規生成へ
+      }
+
+      // 初回：ランダム順を作って保存
+      const order = shuffle(ids);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+      } catch (e) {
+        // 保存できなくても表示だけはランダムにする
+      }
+      applyOrder(order);
+    })();
+  </script>
 </BaseLayout>
