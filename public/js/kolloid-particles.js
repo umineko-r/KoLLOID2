@@ -224,7 +224,7 @@ export function createKolloidSketch(options = {}) {
         this.x = p.random(p.width);
         this.y = p.random(p.height);
         const isTouch = isTouchDevice();
-        this.r = isTouch ? p.random(16, 36) : p.random(10, 40);
+        this.r = isTouch ? p.random(16, 31) : p.random(10, 40);
 
         // 速度は控えめ（冬の海水浴場の静けさ）
         this.vx = p.random(-0.3, 0.3);
