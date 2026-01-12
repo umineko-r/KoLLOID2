@@ -58,6 +58,9 @@ const {
 
         height: auto;
         position: relative;
+
+        /* ★ここが肝：粒子より前に出す */
+        z-index: 20;
       }
 
       .site-title-link {
@@ -139,12 +142,18 @@ const {
         margin: 0 auto;
         padding: 2rem 1.5rem 3rem;
         text-align: center;
+
+        /* ★本文も粒子より前（ただしヘッダーよりは後ろ） */
+        position: relative;
+        z-index: 10;
       }
 
       #canvas-container {
         position: fixed;
         inset: 0;
-        z-index: -1;
+
+        /* ★背景として固定（-1をやめて安定させる） */
+        z-index: 0;
       }
 
       .site-footer {
@@ -153,6 +162,10 @@ const {
         text-align: center;
         font-size: 0.8rem;
         color: #777;
+
+        /* ★フッターも粒子より前 */
+        position: relative;
+        z-index: 10;
       }
     </style>
   </head>
