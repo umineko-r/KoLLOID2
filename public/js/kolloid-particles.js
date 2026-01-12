@@ -35,20 +35,19 @@ function genreColor(genre) {
   // KoLLOID の 36.9℃ ベース（やや桃色）
   // 差は“わかる人にはわかる”程度に留める
   const MAP = {
-    "文章":     [255, 206, 164], // 既存
-    "音楽":     [255, 198, 170], // 既存
-    "短歌・和歌":[255, 190, 184], // 短歌寄り（既存の短歌系をここへ）
-    "詩":       [255, 194, 198], // やや紫み（短歌・和歌と近縁）
-    "写真":     [255, 204, 192], // すこし淡い
-    "絵":       [255, 210, 176], // 少し明るい
-    "映像":     [255, 196, 188], // 少し落ち着き
-    "食":       [255, 212, 160], // 少し暖色寄り
-    "旅":       [255, 200, 156], // 少し黄み寄り
+    "文章":      [255, 206, 164], // 既存
+    "音楽":      [255, 198, 170], // 既存
+    "短歌・和歌": [255, 190, 184], // 短歌寄り（既存の短歌系をここへ）
+    "詩":        [255, 194, 198], // やや紫み（短歌・和歌と近縁）
+    "写真":      [255, 204, 192], // すこし淡い
+    "絵":        [255, 210, 176], // 少し明るい
+    "映像":      [255, 196, 188], // 少し落ち着き
+    "食":        [255, 212, 160], // 少し暖色寄り
+    "旅":        [255, 200, 156], // 少し黄み寄り
   };
 
   return MAP[g] || [255, 190, 170]; // 未分類/その他
 }
-
 
 // contributorsMap から表示名を解決
 function resolveDisplayName(contributorsMap, contributorId) {
@@ -192,6 +191,25 @@ export function createKolloidSketch(options = {}) {
     // ★スマホ用：タップで固定＆情報表示する選択状態
     let selected = null;
 
+    // ★ヘッダー領域（ロゴ＋メニュー）を「粒子操作の禁止ゾーン」にする
+    let headerRect = null;
+
+    function refreshHeaderRect() {
+      const el = document.querySelector("header.site-header");
+      headerRect = el ? el.getBoundingClientRect() : null;
+    }
+
+    function isInHeader(mx, my) {
+      if (!headerRect) refreshHeaderRect();
+      if (!headerRect) return false;
+      return (
+        mx >= headerRect.left &&
+        mx <= headerRect.right &&
+        my >= headerRect.top &&
+        my <= headerRect.bottom
+      );
+    }
+
     function isTouchDevice() {
       return ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
     }
@@ -237,6 +255,20 @@ export function createKolloidSketch(options = {}) {
 
         this.x += this.vx;
         this.y += this.vy;
+
+        // ★ヘッダー禁止ゾーンに入ったら、静かに下へ押し戻す（headerに行かない）
+        if (headerRect) {
+          const inHeaderNow =
+            this.x >= headerRect.left &&
+            this.x <= headerRect.right &&
+            this.y >= headerRect.top &&
+            this.y <= headerRect.bottom;
+
+          if (inHeaderNow) {
+            this.y = headerRect.bottom + this.r + p.random(6, 18);
+            if (this.vy < 0) this.vy = Math.abs(this.vy) + 0.05;
+          }
+        }
 
         if (
           this.x < -50 ||
@@ -405,6 +437,8 @@ export function createKolloidSketch(options = {}) {
       canvas.parent(container);
       p.frameRate(30);
 
+      refreshHeaderRect(); // ★追加（ヘッダー領域の確定）
+
       // 起動時点で enableLinks が true ならデータ粒子、falseならダミー
       if (initialEnableLinks) {
         loadItems()
@@ -423,6 +457,7 @@ export function createKolloidSketch(options = {}) {
 
     p.windowResized = () => {
       p.resizeCanvas(window.innerWidth, window.innerHeight);
+      refreshHeaderRect(); // ★追加
 
       // 形だけは維持
       if (initialEnableLinks) rebuildDataParticles();
@@ -433,6 +468,13 @@ export function createKolloidSketch(options = {}) {
     p.mouseMoved = () => {
       // リンクOFF時は何もしない
       if (!isLinksEnabled()) {
+        hovered = null;
+        p.cursor("default");
+        return;
+      }
+
+      // ★ヘッダー上では粒子を触らない（カーソルも戻す）
+      if (isInHeader(p.mouseX, p.mouseY)) {
         hovered = null;
         p.cursor("default");
         return;
@@ -454,6 +496,9 @@ export function createKolloidSketch(options = {}) {
       if (!isLinksEnabled()) return;
       if (isTouchDevice()) return;
 
+      // ★ヘッダー上では粒子リンクを発火させない（二重発火防止）
+      if (isInHeader(p.mouseX, p.mouseY)) return;
+
       const url = hovered?.item?.link;
       if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
@@ -467,6 +512,9 @@ export function createKolloidSketch(options = {}) {
       const t = p.touches && p.touches[0];
       const mx = t ? t.x : p.mouseX;
       const my = t ? t.y : p.mouseY;
+
+      // ★ヘッダー上では粒子を触らない（リンク二重発火防止）
+      if (isInHeader(mx, my)) return true;
 
       const hit = findHitParticle(mx, my);
 
@@ -502,6 +550,9 @@ export function createKolloidSketch(options = {}) {
     };
 
     p.draw = () => {
+      // ★数フレームに一回だけ更新（毎フレームでも可）
+      if (p.frameCount % 15 === 0) refreshHeaderRect();
+
       p.background(247, 245, 242);
 
       for (const ptl of particles) ptl.update();
