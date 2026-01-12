@@ -214,6 +214,27 @@ export function createKolloidSketch(options = {}) {
       return ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
     }
 
+    function biasedRandom(min, max, power = 2.4) {
+      const u = Math.random();              // 0..1
+      const t = Math.pow(u, power);         // 0 側に寄る
+      return min + (max - min) * t;
+    }
+
+    function mixSize({
+      min, max,               // 通常レンジ（半径）
+      power = 2.4,            // 通常の小さめ寄り具合
+      bigChance,              // 特大が出る確率
+      bigMin, bigMax,         // 特大レンジ（半径）
+      bigPower = 0.8,         // 特大側の分布（<1 で上側に寄せやすい）
+    } = {}) {
+      // 特大の“出会い”
+      if (Math.random() < bigChance) {
+        return biasedRandom(bigMin, bigMax, bigPower);
+      }
+      // 通常
+      return biasedRandom(min, max, power);
+    }
+
     class Particle {
       constructor(item) {
         this.item = item; // item=null の場合はダミー粒子
@@ -223,8 +244,24 @@ export function createKolloidSketch(options = {}) {
       reset(first = false) {
         this.x = p.random(p.width);
         this.y = p.random(p.height);
+        
         const isTouch = isTouchDevice();
-        this.r = isTouch ? p.random(16, 26) : p.random(10, 40);
+
+        this.r = isTouch
+          ? mixSize({
+              min: 15, max: 25,
+              power: 2.6,          // 小さめ多め
+              bigChance: 0.05,     // 5%だけ特大
+              bigMin: 26, bigMax: 30, // 特大（半径）→ 直径52〜68
+              bigPower: 0.9,       // 特大側はやや大きめ寄り
+            })
+          : mixSize({
+              min: 10, max: 40,
+              power: 1.0,
+              bigChance: 0.04,
+              bigMin: 41, bigMax: 55, // PC特大（半径）→ 直径82〜110
+              bigPower: 0.9,
+            });
 
         // 速度は控えめ（冬の海水浴場の静けさ）
         this.vx = p.random(-0.3, 0.3);
