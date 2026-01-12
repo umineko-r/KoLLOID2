@@ -203,6 +203,15 @@
     "updatedAt": "2024-12-14"
   },
   {
+    "id": "k-00006",
+    "contributor": "ibuki",
+    "title": "猛暑の恩恵",
+    "link": "https://www.instagram.com/p/C7qJj-vyV0H/",
+    "genre": "食",
+    "siteType": "instagram",
+    "updatedAt": "2024-06-01"
+  },
+  {
     "id": "umineko-youtube-c95a8afe3519ffba",
     "contributor": "umineko",
     "title": "カバー：「サヨナラCOLOR（SUPER BUTTER DOG）」 by ウミネコ",
@@ -336,14 +345,5 @@
     "genre": "音楽",
     "siteType": "youtube",
     "updatedAt": "2021-09-26"
-  },
-  {
-    "id": "k-00006",
-    "contributor": "ibuki",
-    "title": "猛暑の恩恵",
-    "link": "https://www.instagram.com/p/C7qJj-vyV0H/",
-    "genre": "食",
-    "siteType": "instagram",
-    "updatedAt": "2024-06-01"
   }
 ]
