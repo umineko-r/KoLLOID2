@@ -2,7 +2,7 @@ name: Update particles.json from RSS
 
 on:
   schedule:
-    - cron: "23 8 * * *" # daily 09:00 JST
+    - cron: "58 14 * * *" # daily 09:00 JST
   workflow_dispatch:
 
 permissions:
