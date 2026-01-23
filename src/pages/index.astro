@@ -1,11 +1,15 @@
 ---
-// src/pages/index.astro
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const title = "KoLLOID";
 const subtitle = "とけない個のための表現空間";
 const explanation = `この空間には様々な個性をもった表現がふわふわと浮遊しています。
 ぜひ好きな粒子を手にとって眺めてみてください。`;
+
+// ★ 総粒子数を取得
+const res = await fetch("/data/particles.json");
+const particles = await res.json();
+const totalCount = Array.isArray(particles) ? particles.length : 0;
 ---
 
 <BaseLayout pageTitle={title} subtitle={subtitle} enableLinks={true}>
@@ -13,6 +17,7 @@ const explanation = `この空間には様々な個性をもった表現がふ�
     <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">
       {subtitle}
     </h2>
+
     <p
       style="
         white-space: pre-line;
@@ -22,6 +27,17 @@ const explanation = `この空間には様々な個性をもった表現がふ�
       "
     >
       {explanation}
+    </p>
+
+    {/* ★ 追加する一文（控えめに） */}
+    <p
+      style="
+        margin-top: 1.2rem;
+        font-size: 0.85rem;
+        color: #777;
+      "
+    >
+      現在、{totalCount}種類の粒子の中から、いくつかがランダムに浮かび上がっています。
     </p>
   </section>
 </BaseLayout>
