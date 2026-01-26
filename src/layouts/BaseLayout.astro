@@ -1,7 +1,7 @@
 ---
 // src/layouts/BaseLayout.astro
 
-import contributors from "../data/contributors.json"; // ★追加（displayName解決用）
+import contributors from "../data/contributors.json"; // ★displayName解決用
 
 interface Props {
   pageTitle?: string;
@@ -59,7 +59,7 @@ const {
         height: auto;
         position: relative;
 
-        /* ★ここが肝：粒子より前に出す */
+        /* ★粒子より前 */
         z-index: 20;
       }
 
@@ -84,12 +84,11 @@ const {
         transform: translateY(-1px);
       }
 
-      /* ★メニューは常にロゴ下、中央揃え */
       nav.site-nav {
         position: static;
         display: flex;
         justify-content: center;
-        gap: 1.0rem;
+        gap: 1rem;
         flex-wrap: wrap;
       }
 
@@ -143,7 +142,6 @@ const {
         padding: 2rem 1.5rem 3rem;
         text-align: center;
 
-        /* ★本文も粒子より前（ただしヘッダーよりは後ろ） */
         position: relative;
         z-index: 10;
       }
@@ -151,8 +149,6 @@ const {
       #canvas-container {
         position: fixed;
         inset: 0;
-
-        /* ★背景として固定（-1をやめて安定させる） */
         z-index: 0;
       }
 
@@ -163,9 +159,96 @@ const {
         font-size: 0.8rem;
         color: #777;
 
-        /* ★フッターも粒子より前 */
         position: relative;
         z-index: 10;
+      }
+
+      /* ===== スマホ：粒子情報の下部固定パネル ===== */
+      #particle-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 30;
+
+        display: none;
+        padding: 0.9rem 1rem 1rem;
+
+        background: rgba(255, 255, 255, 0.92);
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+
+      #particle-panel.is-open {
+        display: block;
+      }
+
+      #particle-panel .inner {
+        max-width: 960px;
+        margin: 0 auto;
+        text-align: left;
+      }
+
+      #particle-panel .row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      #particle-panel .title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      #particle-panel .meta {
+        margin-top: 0.35rem;
+        font-size: 0.85rem;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      #particle-panel .actions {
+        display: flex;
+        gap: 0.55rem;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      #particle-panel .btn {
+        appearance: none;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        border-radius: 999px;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      #particle-panel .btn:hover {
+        border-color: rgba(0, 0, 0, 0.28);
+      }
+
+      /* パネルが出てるとき、本文が隠れすぎないように余白 */
+      body.has-particle-panel main.page-main {
+        padding-bottom: 6.5rem;
+      }
+
+      @media (min-width: 801px) {
+        /* PCでは基本使わない（hoverツールチップがある） */
+        #particle-panel {
+          display: none !important;
+        }
+        body.has-particle-panel main.page-main {
+          padding-bottom: 3rem;
+        }
       }
     </style>
   </head>
@@ -192,13 +275,30 @@ const {
       <slot />
     </main>
 
+    {/* ★スマホ用：粒子情報パネル（enableLinks=true のページだけ使う） */}
+    <div id="particle-panel" aria-live="polite">
+      <div class="inner">
+        <div class="row">
+          <div>
+            <p class="title" id="pp-title"></p>
+            <div class="meta" id="pp-meta"></div>
+          </div>
+
+          <div class="actions">
+            <a class="btn" id="pp-open" href="#" target="_blank" rel="noopener noreferrer">開く</a>
+            <button class="btn" id="pp-close" type="button">閉じる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer class="site-footer">© KoLLOID, 2025–</footer>
 
     {/* script は常に出す（showCanvas=false のページでも destroy できるように） */}
     <script
       type="module"
       is:inline
-      define:vars={{ contributors }}  /* ★これが肝：contributorsをブラウザへ渡す */
+      define:vars={{ contributors }} /* ★contributorsをブラウザへ渡す */
     >
       import { createKolloidSketch } from "/js/kolloid-particles.js?v=20251228-genre-1";
 
@@ -209,7 +309,83 @@ const {
         return { showCanvas, enableLinks };
       }
 
+      function isTouchDevice() {
+        return ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+      }
+
+      function displayNameOf(contributorKey) {
+        const key = (contributorKey || "").trim();
+        return (contributors && contributors[key] && contributors[key].displayName) ? contributors[key].displayName : (contributorKey || "");
+      }
+
+      // ===== 粒子パネル制御 =====
+      function closeParticlePanel() {
+        const panel = document.getElementById("particle-panel");
+        if (!panel) return;
+        panel.classList.remove("is-open");
+        document.body.classList.remove("has-particle-panel");
+      }
+
+      function openParticlePanel(item) {
+        const panel = document.getElementById("particle-panel");
+        if (!panel) return;
+
+        const titleEl = document.getElementById("pp-title");
+        const metaEl = document.getElementById("pp-meta");
+        const openEl = document.getElementById("pp-open");
+
+        const title = item?.title || "";
+        const contributorName = displayNameOf(item?.contributor);
+        const genre = item?.genre || "—";
+
+        if (titleEl) titleEl.textContent = title;
+        if (metaEl) metaEl.textContent = `制作者：${contributorName} / ジャンル：${genre}`;
+        if (openEl) {
+          openEl.href = item?.link || "#";
+        }
+
+        panel.classList.add("is-open");
+        document.body.classList.add("has-particle-panel");
+      }
+
+      function hookParticlePanelEvents() {
+        const closeBtn = document.getElementById("pp-close");
+        if (closeBtn && !closeBtn.__kolloidBound) {
+          closeBtn.addEventListener("click", closeParticlePanel);
+          closeBtn.__kolloidBound = true;
+        }
+      }
+
+      // particles.js から飛んでくるイベントを受ける
+      function hookKolloidEvents() {
+        if (window.__kolloidPanelHooked) return;
+        window.__kolloidPanelHooked = true;
+
+        window.addEventListener("kolloid:particle:select", (ev) => {
+          const { enableLinks } = getFlags();
+          if (!enableLinks) return;
+
+          // PCでは表示しない（hoverツールチップがある）
+          if (!isTouchDevice()) return;
+
+          const item = ev?.detail?.item || null;
+          if (!item) {
+            closeParticlePanel();
+            return;
+          }
+          openParticlePanel(item);
+        });
+
+        window.addEventListener("kolloid:particle:clear", () => {
+          closeParticlePanel();
+        });
+      }
+
+      // ===== p5 初期化/破棄 =====
       function destroySketch() {
+        // パネルも閉じる（ページ遷移時の残留防止）
+        closeParticlePanel();
+
         if (window.__kolloidP5__) {
           try {
             window.__kolloidP5__.remove();
@@ -226,6 +402,9 @@ const {
       function initSketch() {
         const { showCanvas, enableLinks } = getFlags();
 
+        hookParticlePanelEvents();
+        hookKolloidEvents();
+
         destroySketch();
         if (!showCanvas) return;
 
@@ -234,7 +413,6 @@ const {
           return;
         }
 
-        // ★contributorsMap を渡す（displayName解決用）
         window.__kolloidP5__ = new p5(
           createKolloidSketch({ enableLinks, contributorsMap: contributors })
         );
