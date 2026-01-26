@@ -5,7 +5,7 @@
 //
 // ★重要：enableLinks は「起動時固定」ではなく、bodyのdata属性を毎回参照して強制的に反映する
 //        これにより、もし p5 がページ遷移で生き残っても About/Statement では確実にリンクOFFになる。
-console.log("[kolloid] particles.js loaded v=20260126-genre-1+panel-2");
+console.log("[kolloid] particles.js loaded v=20260126v2");
 
 function toDate(value) {
   if (!value) return null;
@@ -26,22 +26,23 @@ function clamp(x, min, max) {
 }
 
 // ★ジャンル色（同系統の“うっすら差”だけ）
-// 指定ジャンル：文章 / 音楽 / 詩 / 写真 / 絵 / 映像 / 食 / 旅 / 自然
+// 指定ジャンル：文章 / 音楽 / 詩 / 短歌・和歌 / 写真 / 絵 / 映像 / 食 / 旅 / 自然
 function genreColor(genre) {
   const g = (genre || "").trim();
 
   // KoLLOID の 36.9℃ ベース（やや桃色）
   // 差は“わかる人にはわかる”程度に留める
   const MAP = {
-    "文章": [255, 206, 164],
-    "音楽": [255, 198, 170],
-    "詩": [255, 194, 198],
-    "写真": [255, 204, 192],
-    "絵": [255, 210, 176],
-    "映像": [255, 196, 188],
-    "食": [255, 212, 160],
-    "旅": [255, 200, 156],
-    "自然": [255, 205, 168], // ★追加：ほんの少し葉っぱ寄り（主張しすぎない）
+    "文章":       [255, 206, 164],
+    "音楽":       [255, 198, 170],
+    "短歌・和歌": [255, 190, 184],
+    "詩":         [255, 194, 198],
+    "写真":       [255, 204, 192],
+    "絵":         [255, 210, 176],
+    "映像":       [255, 196, 188],
+    "食":         [255, 212, 160],
+    "旅":         [255, 200, 156],
+    "自然":       [255, 208, 168], // ★追加：少し“やわい黄緑寄り”を想定（同系統の範囲で）
   };
 
   return MAP[g] || [255, 190, 170]; // 未分類/その他
@@ -56,7 +57,12 @@ function resolveDisplayName(contributorsMap, contributorId) {
 }
 
 function selectItems(allItems, opts) {
-  const { totalCount, newRatio = 0.3, recentDays = 30, instagramPerAccountCap = 5 } = opts;
+  const {
+    totalCount,
+    newRatio = 0.3,
+    recentDays = 30,
+    instagramPerAccountCap = 5,
+  } = opts;
 
   const normalized = (Array.isArray(allItems) ? allItems : [])
     .map((it) => ({
@@ -106,7 +112,11 @@ function selectItems(allItems, opts) {
     return tb - ta;
   });
 
-  const newPool = recentPool.length > 0 ? recentPool : sortedByNew.slice(0, Math.ceil(totalCount * 0.5));
+  const newPool =
+    recentPool.length > 0
+      ? recentPool
+      : sortedByNew.slice(0, Math.ceil(totalCount * 0.5));
+
   const newCount = Math.min(newPool.length, Math.round(totalCount * newRatio));
 
   const newPicked = shuffle([...newPool]).slice(0, newCount);
@@ -160,51 +170,66 @@ function targetCount() {
   return 56;
 }
 
-// ★ここが肝：今この瞬間にリンクが許可されているかを毎回読む
+// ★今この瞬間にリンクが許可されているかを毎回読む
 function isLinksEnabled() {
   return document.body?.dataset?.enableLinks === "true";
 }
 
 export function createKolloidSketch(options = {}) {
-  const { enableLinks: initialEnableLinks = false, contributorsMap = {} } = options;
+  const {
+    enableLinks: initialEnableLinks = false,
+    contributorsMap = {},
+  } = options;
 
   return (p) => {
     const particles = [];
     let items = [];
     let hovered = null;
 
-    // ★スマホ用：タップで固定（下部パネルに出す）する選択状態
+    // スマホ用：タップで固定する選択状態
     let selected = null;
 
     // ★ヘッダー領域（ロゴ＋メニュー）を「粒子操作の禁止ゾーン」にする
     let headerRect = null;
+
+    // ★下部パネル領域（スマホ固定表示）も禁止ゾーンにする（クリック貫通対策）
+    let panelRect = null;
+
+    // ★スマホ固定パネルDOM
+    let panelEl = null;
+
+    function isTouchDevice() {
+      return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    }
 
     function refreshHeaderRect() {
       const el = document.querySelector("header.site-header");
       headerRect = el ? el.getBoundingClientRect() : null;
     }
 
+    function refreshPanelRect() {
+      const el = document.getElementById("kolloid-panel");
+      panelRect = el ? el.getBoundingClientRect() : null;
+    }
+
+    function isInRect(rect, mx, my) {
+      if (!rect) return false;
+      return mx >= rect.left && mx <= rect.right && my >= rect.top && my <= rect.bottom;
+    }
+
     function isInHeader(mx, my) {
       if (!headerRect) refreshHeaderRect();
-      if (!headerRect) return false;
-      return mx >= headerRect.left && mx <= headerRect.right && my >= headerRect.top && my <= headerRect.bottom;
+      return isInRect(headerRect, mx, my);
     }
 
-    function isTouchDevice() {
-      return "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    }
-
-    // ===== 下部固定パネル（BaseLayout側）へ通知 =====
-    function emitSelect(item) {
-      window.dispatchEvent(new CustomEvent("kolloid:particle:select", { detail: { item } }));
-    }
-    function emitClear() {
-      window.dispatchEvent(new CustomEvent("kolloid:particle:clear"));
+    function isInPanel(mx, my) {
+      if (!panelRect) refreshPanelRect();
+      return isInRect(panelRect, mx, my);
     }
 
     function biasedRandom(min, max, power = 2.4) {
-      const u = Math.random(); // 0..1
-      const t = Math.pow(u, power); // 0 側に寄る
+      const u = Math.random();      // 0..1
+      const t = Math.pow(u, power); // 0側に寄る（power>1）
       return min + (max - min) * t;
     }
 
@@ -212,15 +237,180 @@ export function createKolloidSketch(options = {}) {
       min,
       max,
       power = 2.4,
-      bigChance,
+      bigChance = 0.05,
       bigMin,
       bigMax,
-      bigPower = 0.8,
+      bigPower = 0.9,
     } = {}) {
       if (Math.random() < bigChance) {
         return biasedRandom(bigMin, bigMax, bigPower);
       }
       return biasedRandom(min, max, power);
+    }
+
+    function ensurePanel() {
+      if (!isTouchDevice()) return null;
+
+      // 既存があれば掴む（ページ遷移など）
+      const existing = document.getElementById("kolloid-panel");
+      if (existing) {
+        panelEl = existing;
+        return panelEl;
+      }
+
+      // 作る
+      const el = document.createElement("div");
+      el.id = "kolloid-panel";
+      el.setAttribute("aria-live", "polite");
+      el.style.cssText = `
+        position: fixed;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        z-index: 40;
+        display: none;
+
+        background: rgba(255,255,255,0.94);
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+        padding: 12px 12px 10px;
+
+        text-align: left;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #333;
+      `;
+
+      // ★クリック貫通防止（これが重要）
+      const stop = (e) => {
+        e.stopPropagation();
+        // iOS等で“下に届く”ことがあるので、必要なら止める
+        e.preventDefault();
+      };
+      // passive:false で preventDefault 有効
+      el.addEventListener("touchstart", stop, { passive: false });
+      el.addEventListener("pointerdown", stop, { passive: false });
+
+      // 中身（最低限）
+      el.innerHTML = `
+        <div id="kolloid-panel-title" style="
+          font-size: 0.95rem;
+          font-weight: 600;
+          line-height: 1.3;
+          margin: 0 0 6px 0;
+          color: #333;
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        "></div>
+
+        <div id="kolloid-panel-meta" style="
+          font-size: 0.82rem;
+          color: #666;
+          line-height: 1.35;
+          margin: 0 0 10px 0;
+        "></div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button id="kolloid-panel-open" type="button" style="
+            appearance: none;
+            border: 1px solid rgba(0,0,0,0.12);
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            color: #333;
+          ">開く</button>
+
+          <button id="kolloid-panel-close" type="button" style="
+            appearance: none;
+            border: 1px solid rgba(0,0,0,0.10);
+            background: rgba(0,0,0,0.03);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            color: #444;
+          ">閉じる</button>
+        </div>
+      `;
+
+      document.body.appendChild(el);
+      panelEl = el;
+      refreshPanelRect();
+
+      // ボタン動作
+      const openBtn = el.querySelector("#kolloid-panel-open");
+      const closeBtn = el.querySelector("#kolloid-panel-close");
+
+      if (openBtn) {
+        openBtn.addEventListener(
+          "click",
+          (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            // ★ここで選択を解除しない（=パネルは閉じない）
+            if (selected?.item?.link) {
+              window.open(selected.item.link, "_blank", "noopener,noreferrer");
+            }
+          },
+          { passive: false }
+        );
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener(
+          "click",
+          (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            clearSelection(true);
+          },
+          { passive: false }
+        );
+      }
+
+      return panelEl;
+    }
+
+    function showPanelForItem(it) {
+      if (!isTouchDevice()) return;
+      if (!isLinksEnabled()) return;
+
+      const el = ensurePanel();
+      if (!el) return;
+
+      if (!it) {
+        el.style.display = "none";
+        refreshPanelRect();
+        return;
+      }
+
+      const titleEl = el.querySelector("#kolloid-panel-title");
+      const metaEl = el.querySelector("#kolloid-panel-meta");
+      const openBtn = el.querySelector("#kolloid-panel-open");
+
+      const title = it.title ?? "";
+      const contributorName = resolveDisplayName(contributorsMap, it.contributor);
+      const genre = it.genre ?? "—";
+
+      if (titleEl) titleEl.textContent = title;
+      if (metaEl) metaEl.textContent = `制作者：${contributorName} / ジャンル：${genre}`;
+
+      if (openBtn) {
+        const disabled = !it.link;
+        openBtn.disabled = disabled;
+        openBtn.style.opacity = disabled ? "0.4" : "1";
+      }
+
+      el.style.display = "block";
+      refreshPanelRect();
+    }
+
+    function clearSelection(resume = false) {
+      if (selected && resume) selected.resume();
+      selected = null;
+      showPanelForItem(null);
     }
 
     class Particle {
@@ -239,8 +429,8 @@ export function createKolloidSketch(options = {}) {
           ? mixSize({
               min: 15,
               max: 25,
-              power: 2.6,
-              bigChance: 0.05,
+              power: 2.6,       // 小さめ多め
+              bigChance: 0.05,  // たまに特大
               bigMin: 26,
               bigMax: 30,
               bigPower: 0.9,
@@ -248,13 +438,14 @@ export function createKolloidSketch(options = {}) {
           : mixSize({
               min: 10,
               max: 40,
-              power: 1.0,
+              power: 1.0,       // PCは線形（≒そのまま）
               bigChance: 0.04,
               bigMin: 41,
               bigMax: 55,
               bigPower: 0.9,
             });
 
+        // 速度は控えめ
         this.vx = p.random(-0.3, 0.3);
         this.vy = p.random(-0.3, 0.3);
 
@@ -277,15 +468,19 @@ export function createKolloidSketch(options = {}) {
       }
 
       update() {
+        // 選択中は停止（スマホ）
         if (this === selected && isTouchDevice()) return;
 
         this.x += this.vx;
         this.y += this.vy;
 
-        // ★ヘッダー禁止ゾーンに入ったら静かに下へ
+        // ★ヘッダー禁止ゾーン：入ったら下へ押し戻す
         if (headerRect) {
           const inHeaderNow =
-            this.x >= headerRect.left && this.x <= headerRect.right && this.y >= headerRect.top && this.y <= headerRect.bottom;
+            this.x >= headerRect.left &&
+            this.x <= headerRect.right &&
+            this.y >= headerRect.top &&
+            this.y <= headerRect.bottom;
 
           if (inHeaderNow) {
             this.y = headerRect.bottom + this.r + p.random(6, 18);
@@ -293,13 +488,20 @@ export function createKolloidSketch(options = {}) {
           }
         }
 
-        if (this.x < -50 || this.x > p.width + 50 || this.y < -50 || this.y > p.height + 50) {
+        if (
+          this.x < -50 ||
+          this.x > p.width + 50 ||
+          this.y < -50 ||
+          this.y > p.height + 50
+        ) {
           this.reset();
         }
       }
 
       draw() {
-        const [rr, gg, bb] = this.item ? genreColor(this.item.genre) : [255, 190, 170];
+        const [rr, gg, bb] = this.item
+          ? genreColor(this.item.genre)
+          : [255, 190, 170];
 
         const isSelected = this === selected && isTouchDevice();
 
@@ -319,7 +521,7 @@ export function createKolloidSketch(options = {}) {
         const dy = my - this.y;
 
         const isTouch = isTouchDevice();
-        const extra = isTouch ? 18 : 0;
+        const extra = isTouch ? 18 : 0; // 指サイズ対策
 
         const rr = this.r + extra;
         return dx * dx + dy * dy <= rr * rr;
@@ -359,9 +561,8 @@ export function createKolloidSketch(options = {}) {
 
     function buildDummyParticles() {
       particles.length = 0;
-      selected = null;
       hovered = null;
-      emitClear();
+      clearSelection(false);
 
       const count = targetCount();
       for (let i = 0; i < count; i++) particles.push(new Particle(null));
@@ -369,9 +570,8 @@ export function createKolloidSketch(options = {}) {
 
     function rebuildDataParticles() {
       particles.length = 0;
-      selected = null;
       hovered = null;
-      emitClear();
+      clearSelection(false);
 
       const selectedItems = selectItems(items, {
         totalCount: targetCount(),
@@ -383,7 +583,7 @@ export function createKolloidSketch(options = {}) {
       for (const it of selectedItems) particles.push(new Particle(it));
     }
 
-    function drawTooltipOrCard(it, mx, my) {
+    function drawTooltip(it, mx, my) {
       if (!it) return;
 
       const title = it.title ?? "";
@@ -399,7 +599,9 @@ export function createKolloidSketch(options = {}) {
       p.textSize(12);
 
       const pad = 10;
-      const w = Math.max(p.textWidth(line1), p.textWidth(line2), p.textWidth(line3)) + pad * 2;
+      const w =
+        Math.max(p.textWidth(line1), p.textWidth(line2), p.textWidth(line3)) +
+        pad * 2;
       const h = pad * 2 + 46;
 
       let x = mx + 14;
@@ -431,11 +633,6 @@ export function createKolloidSketch(options = {}) {
       return null;
     }
 
-    function openParticleLink(ptl) {
-      const url = ptl?.item?.link;
-      if (url) window.open(url, "_blank", "noopener,noreferrer");
-    }
-
     p.setup = () => {
       const container = document.getElementById("canvas-container");
       const canvas = p.createCanvas(window.innerWidth, window.innerHeight);
@@ -443,7 +640,10 @@ export function createKolloidSketch(options = {}) {
       p.frameRate(30);
 
       refreshHeaderRect();
+      refreshPanelRect();
+      if (isTouchDevice()) ensurePanel();
 
+      // 起動時点で enableLinks が true ならデータ粒子、falseならダミー
       if (initialEnableLinks) {
         loadItems()
           .then((data) => {
@@ -462,6 +662,7 @@ export function createKolloidSketch(options = {}) {
     p.windowResized = () => {
       p.resizeCanvas(window.innerWidth, window.innerHeight);
       refreshHeaderRect();
+      refreshPanelRect();
 
       if (initialEnableLinks) rebuildDataParticles();
       else buildDummyParticles();
@@ -475,12 +676,14 @@ export function createKolloidSketch(options = {}) {
         return;
       }
 
+      // ★ヘッダー上は触らない
       if (isInHeader(p.mouseX, p.mouseY)) {
         hovered = null;
         p.cursor("default");
         return;
       }
 
+      // タッチ端末では mouseMoved を頼りにしない
       if (isTouchDevice()) {
         hovered = null;
         p.cursor("default");
@@ -495,13 +698,14 @@ export function createKolloidSketch(options = {}) {
     p.mouseClicked = () => {
       if (!isLinksEnabled()) return;
       if (isTouchDevice()) return;
+
       if (isInHeader(p.mouseX, p.mouseY)) return;
 
       const url = hovered?.item?.link;
       if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
 
-    // スマホ：タップで固定＆下部パネルへ送る → 同じ粒子をもう一度タップで開く
+    // スマホ：タップで選択→下部パネルに表示（粒子自体の二度タップで開くのはやめる）
     p.touchStarted = () => {
       if (!isLinksEnabled()) return true;
 
@@ -509,46 +713,48 @@ export function createKolloidSketch(options = {}) {
       const mx = t ? t.x : p.mouseX;
       const my = t ? t.y : p.mouseY;
 
-      if (isInHeader(mx, my)) return true;
+      // ★ヘッダー上/パネル上は粒子を触らない（貫通＆二重発火防止）
+      if (isInHeader(mx, my) || isInPanel(mx, my)) return true;
 
       const hit = findHitParticle(mx, my);
 
-      // 何も当たらなければ解除
+      // 何も当たらなければ選択解除
       if (!hit) {
-        if (selected) {
-          selected.resume();
-          selected = null;
-          emitClear();
-        }
+        clearSelection(true);
         return true;
       }
 
-      // ダミー粒子
+      // ダミー粒子：止めるだけ（パネルは出さない）
       if (!hit.item) {
         if (selected && selected !== hit) selected.resume();
         selected = hit;
         selected.freeze();
-        emitClear();
+        showPanelForItem(null);
         return false;
       }
 
-      // 同じ粒子を再タップ → 開く
-      if (selected === hit) {
-        openParticleLink(hit);
-        return false;
-      }
+      // 同じ粒子を再タップ：何もしない（開くのはパネルのボタンで）
+      if (selected === hit) return false;
 
-      // 別の粒子を選択
       if (selected && selected !== hit) selected.resume();
       selected = hit;
       selected.freeze();
 
-      emitSelect(hit.item);
+      // ★スマホは「粒子の近くカード」は出さず、下部パネルに固定表示
+      showPanelForItem(hit.item);
+
       return false;
     };
 
     p.draw = () => {
-      if (p.frameCount % 15 === 0) refreshHeaderRect();
+      // ページ遷移等で enableLinks がOFFになったら、スマホパネルも閉じる
+      if (!isLinksEnabled() && panelEl) showPanelForItem(null);
+
+      // rectの更新（軽めに）
+      if (p.frameCount % 15 === 0) {
+        refreshHeaderRect();
+        refreshPanelRect();
+      }
 
       p.background(247, 245, 242);
 
@@ -556,9 +762,9 @@ export function createKolloidSketch(options = {}) {
       for (let i = 0; i < 3; i++) resolveOverlaps();
       for (const ptl of particles) ptl.draw();
 
-      // PC：ホバーで表示（スマホは表示しない）
+      // ★PCのみ：ホバーでツールチップ
       if (!isTouchDevice() && isLinksEnabled() && hovered?.item) {
-        drawTooltipOrCard(hovered.item, p.mouseX, p.mouseY);
+        drawTooltip(hovered.item, p.mouseX, p.mouseY);
       }
     };
   };
