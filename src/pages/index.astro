@@ -8,22 +8,50 @@ const subtitle = "とけない個のための表現空間";
 const explanation = `この空間には様々な個性をもった表現がふわふわと浮遊しています。
 ぜひ好きな粒子を手にとって眺めてみてください。`;
 
-// ★ public/data/particles.json を読む（無くても壊れない）
-const particlesPath = path.join(process.cwd(), "public", "data", "particles.json");
+// ★ 自動収集 + 手動管理 を合算して数える
+const particlesPaths = [
+  path.join(process.cwd(), "public", "data", "particles.json"),
+  path.join(process.cwd(), "public", "data", "particles-m.json"),
+];
 
+type Particle = {
+  id?: string;
+  link?: string;
+};
+
+async function readParticlesSafe(filePath: string): Promise<Particle[]> {
+  try {
+    const raw = await fs.readFile(filePath, "utf-8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Particle[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+// 総数（重複は id || link で除外）
 let totalCount = 0;
 
 try {
-  const raw = await fs.readFile(particlesPath, "utf-8");
-  const parsed = JSON.parse(raw);
-  totalCount = Array.isArray(parsed) ? parsed.length : 0;
-} catch (e) {
+  const lists = await Promise.all(particlesPaths.map(readParticlesSafe));
+  const merged = lists.flat();
+
+  const byKey = new Map<string, Particle>();
+  for (const it of merged) {
+    const key = (it?.id || it?.link || "").trim();
+    if (!key) continue;
+    // 同一キーは後勝ちでOK（表示数の目的なので）
+    byKey.set(key, it);
+  }
+
+  totalCount = byKey.size;
+} catch {
   // 生成前/未配置などでもトップは表示したいので握りつぶす
   totalCount = 0;
 }
 ---
 
-<BaseLayout pageTitle={title} subtitle={subtitle} enableLinks={true}>
+<BaseLayout pageTitle={title} subtitle={subtitle} enableLinks={true} showCanvas={true}>
   <section>
     <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">
       {subtitle}
@@ -40,7 +68,6 @@ try {
       {explanation}
     </p>
 
-    {/* ★ 追加する一文（控えめに） */}
     <p
       style="
         margin-top: 1.2rem;
