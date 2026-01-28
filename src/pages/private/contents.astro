@@ -12,6 +12,7 @@ type Particle = {
   genre?: string;
   siteType?: string;
   updatedAt?: string;
+  account?: string; // Instagram用（あってもなくてもOK）
 };
 
 type Contributor = {
@@ -23,8 +24,8 @@ type Contributor = {
 type ContributorsMap = Record<string, Contributor>;
 
 type GroupBlock = {
-  siteType: string; // normalized
-  label: string; // display label
+  siteType: string;
+  label: string;
   items: Particle[];
 };
 
@@ -40,24 +41,50 @@ type ContributorBlock = {
 const pageTitle = "Contents | KoLLOID";
 const contributorsMap = contributors as ContributorsMap;
 
-// public/data/particles.json を読む（無くても壊れない）
-const particlesPath = path.join(process.cwd(), "public", "data", "particles.json");
+// ★2ファイル読む
+const baseDir = path.join(process.cwd(), "public", "data");
+const particlesPaths = [
+  path.join(baseDir, "particles.json"),     // 自動収集
+  path.join(baseDir, "particles-m.json"),   // 手動（Instagramなど）
+];
 
 let particles: Particle[] = [];
 let particlesReadOk = true;
 
+async function readJsonArray(filePath: string): Promise<Particle[]> {
+  try {
+    const raw = await fs.readFile(filePath, "utf-8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Particle[]) : [];
+  } catch (e) {
+    console.warn("[contents] failed to read:", filePath, e);
+    return [];
+  }
+}
+
 try {
-  const raw = await fs.readFile(particlesPath, "utf-8");
-  const parsed = JSON.parse(raw);
-  particles = Array.isArray(parsed) ? (parsed as Particle[]) : [];
+  const arrays = await Promise.all(particlesPaths.map(readJsonArray));
+  const merged = arrays.flat();
+
+  // ★id or link で重複排除（JS側と同じ思想）
+  const byKey = new Map<string, Particle>();
+  for (const p of merged) {
+    const key = (p.id || p.link || "").trim();
+    if (!key) continue;
+    byKey.set(key, p);
+  }
+
+  particles = [...byKey.values()];
 } catch (e) {
-  console.warn("[contents] failed to read particles.json:", particlesPath, e);
+  console.warn("[contents] failed to read particles:", e);
   particles = [];
   particlesReadOk = false;
 }
 
 function normalizeSiteType(siteType?: string) {
   const s = (siteType || "").trim().toLowerCase();
+  // ★blogger を blog に寄せる（任意）
+  if (s === "blogger") return "blog";
   return s || "other";
 }
 
@@ -67,6 +94,7 @@ function siteTypeLabel(siteType: string) {
     note: "note",
     instagram: "Instagram",
     blog: "Blog",
+    blogger: "Blog",
     facebook: "Facebook",
     other: "Other",
   };
@@ -84,7 +112,7 @@ function sortSiteTypes(a: string, b: string) {
   return a.localeCompare(b);
 }
 
-// ★孤児（contributors.json に存在しない contributor を持つ particle）を検出
+// ★孤児検出
 const knownKeys = new Set(Object.keys(contributorsMap));
 
 const orphanParticles: Particle[] = particles
@@ -94,7 +122,7 @@ const orphanParticles: Particle[] = particles
   })
   .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
 
-// ★表示用ブロック（0件でも必ず作る）
+// ★表示用ブロック
 const blocks: ContributorBlock[] = Object.entries(contributorsMap).map(
   ([key, contributor]) => {
     const items = particles
@@ -140,7 +168,7 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).map(
 
     {!particlesReadOk ? (
       <p style="font-size:0.85rem; color:#a66; margin:0 0 0.6rem;">
-        ※ particles.json が読み込めませんでした（未生成/未配置の可能性）。contributors の台帳のみ表示しています。
+        ※ particles が読み込めませんでした（未生成/未配置の可能性）。contributors の台帳のみ表示しています。
       </p>
     ) : null}
 
@@ -191,7 +219,7 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).map(
                       {" "}
                       （{item.genre || "—"}
                       {item.updatedAt ? ` / ${item.updatedAt}` : ""}
-                      ）
+                      ）{/* siteTypeを出したければここに追加 */}
                     </span>
                   </li>
                 ))}
@@ -209,7 +237,7 @@ const blocks: ContributorBlock[] = Object.entries(contributorsMap).map(
         </h3>
 
         <p style="font-size:0.85rem; color:#777; margin:0 0 1rem;">
-          ※ particles.json に存在するが、contributors.json に contributor 定義がない項目です。
+          ※ particles に存在するが、contributors.json に contributor 定義がない項目です。
           contributorキーのタイポ、または contributors 側の追加漏れの可能性があります。
         </p>
 
