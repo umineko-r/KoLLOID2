@@ -508,11 +508,37 @@ export function createKolloidSketch(options = {}) {
     }
 
     async function loadItems() {
-      const res = await fetch("/data/particles.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("particles.json fetch failed");
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      const urls = [
+        "/data/particles.json",    // 自動収集
+        "/data/particles-m.json",  // 手動管理
+      ];
+
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) return [];
+            const data = await res.json();
+            return Array.isArray(data) ? data : [];
+          } catch {
+            return [];
+          }
+        })
+      );
+
+      const merged = results.flat();
+
+      // link or id で重複排除（安全側）
+      const byKey = new Map();
+      for (const p of merged) {
+        const key = p.id || p.link;
+        if (!key) continue;
+        byKey.set(key, p);
+      }
+
+      return [...byKey.values()];
     }
+
 
     function buildDummyParticles() {
       particles.length = 0;
