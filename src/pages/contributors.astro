@@ -2,8 +2,16 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import contributors from "../data/contributors.json";
 
+type AliasRule = {
+  name: string;
+  when?: {
+    genre?: string[];
+  };
+};
+
 type Contributor = {
   displayName: string;
+  aliases?: AliasRule[];
   genres?: string[];
   links?: Record<string, string>;
 };
@@ -18,7 +26,7 @@ const LINK_LABELS: Record<string, string> = {
   note: "note",
   threads: "Threads",
   x: "X",
-  blogger:"Blogger",
+  blogger: "Blogger",
 };
 
 /* contributors を分解 */
@@ -34,6 +42,22 @@ const others = entries
 
 // 主宰（固定表示）
 const host = entries.find(([id]) => id === HOST_ID) ?? null;
+
+function displayNameWithAliases(c: Contributor) {
+  const main = (c.displayName || "").trim();
+  const aliases = (Array.isArray(c.aliases) ? c.aliases : [])
+    .map((a) => (a?.name || "").trim())
+    .filter((x) => x.length > 0);
+
+  // 重複除去（mainと同じものは除く）
+  const uniq = Array.from(new Set(aliases)).filter((x) => x !== main);
+
+  if (!main) return uniq.join("／") || "";
+  if (uniq.length === 0) return main;
+
+  // メイン／エイリアス（複数ならスラッシュで並列）
+  return `${main}／${uniq.join("／")}`;
+}
 ---
 
 <BaseLayout pageTitle="Contributors | KoLLOID" enableLinks={false} showCanvas={false}>
@@ -56,7 +80,7 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
           "
         >
           <h3 style="margin-bottom: 0.4rem;">
-            {c.displayName}
+            {displayNameWithAliases(c)}
           </h3>
 
           {/* ジャンル */}
@@ -104,7 +128,7 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
     {host ? (
       <section style="margin-top: 2.2rem; padding-top: 0.2rem;">
         <h3 style="margin-bottom: 0.4rem; font-size: 1.05rem;">
-          {host[1].displayName}
+          {displayNameWithAliases(host[1])}
           <span
             style="
               margin-left: 0.5rem;
@@ -147,7 +171,7 @@ const host = entries.find(([id]) => id === HOST_ID) ?? null;
                     white-space: nowrap;
                   "
                 >
-                    {label}
+                  {label}
                 </a>
               );
             })}
