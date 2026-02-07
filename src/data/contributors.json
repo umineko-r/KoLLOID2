@@ -1,6 +1,14 @@
 {
   "umineko": {
     "displayName": "ウミネコ",
+    "aliases": [
+      {
+        "name": "海猫",
+        "when": {
+          "genre": ["短歌・和歌", "文章"]
+        }
+      }
+    ],
     "genres":["音楽","短歌・和歌","文章"],
     "links": {
       "instagram": "https://www.instagram.com/umineko_soratob/",

@@ -45,11 +45,45 @@ function genreColor(genre) {
 }
 
 // contributorsMap から表示名を解決
-function resolveDisplayName(contributorsMap, contributorId) {
-  const id = (contributorId || "").trim();
-  if (!id) return contributorId || "";
-  const ent = contributorsMap && contributorsMap[id];
-  return ent && ent.displayName ? ent.displayName : id;
+function matchesWhen(item, when) {
+  if (!when) return true;
+
+  // genre 条件
+  if (when.genre) {
+    const allow = Array.isArray(when.genre) ? when.genre : [when.genre];
+    if (!allow.includes(item?.genre)) return false;
+  }
+
+  // siteType 条件
+  if (when.siteType) {
+    const allow = Array.isArray(when.siteType) ? when.siteType : [when.siteType];
+    if (!allow.includes(item?.siteType)) return false;
+  }
+
+  // account 条件（instagram 等）
+  if (when.account) {
+    const allow = Array.isArray(when.account) ? when.account : [when.account];
+    if (!allow.includes(item?.account)) return false;
+  }
+
+  return true;
+}
+
+function resolveDisplayName(contributorsMap, item) {
+  const id = (item?.contributor || "").trim();
+  if (!id) return "";
+
+  const ent = contributorsMap?.[id];
+  if (!ent) return id;
+
+  const aliases = Array.isArray(ent.aliases) ? ent.aliases : [];
+  for (const rule of aliases) {
+    if (rule?.name && matchesWhen(item, rule.when)) {
+      return rule.name;
+    }
+  }
+
+  return ent.displayName || id;
 }
 
 /**
@@ -378,7 +412,7 @@ export function createKolloidSketch(options = {}) {
       const openBtn = el.querySelector("#kolloid-panel-open");
 
       const title = it.title ?? "";
-      const contributorName = resolveDisplayName(contributorsMap, it.contributor);
+      const contributorName = resolveDisplayName(contributorsMap, it);
       const genre = it.genre ?? "—";
 
       if (titleEl) titleEl.textContent = title;
