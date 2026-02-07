@@ -70,44 +70,41 @@ function matchesWhen(item, when) {
 }
 
 // contributorsMap から表示名を解決（複数名にも対応）
-function resolveDisplayName(contributorsMap, contributorId) {
+// contributorsMap から表示名を解決（aliases/条件付き表示名に対応）
+function resolveDisplayName(contributorsMap, contributorId, item) {
   const id = (contributorId || "").trim();
   if (!id) return contributorId || "";
 
   const ent = contributorsMap && contributorsMap[id];
-  if (!ent) return id; // 未登録ならIDを返す（空欄にしない）
+  if (!ent) return id; // 未登録でも空欄にしない
 
-  // 1) 旧形式: displayName: "海猫"
+  const genre = (item?.genre || "").trim();
+
+  // 1) aliases があれば条件一致のものを優先
+  const aliases = Array.isArray(ent.aliases) ? ent.aliases : [];
+  for (const a of aliases) {
+    const name = (a?.name || "").trim();
+    if (!name) continue;
+
+    const when = a?.when || {};
+    // when.genre: ["短歌・和歌", "文章"] など
+    if (Array.isArray(when.genre) && when.genre.length > 0) {
+      if (genre && when.genre.includes(genre)) return name;
+      continue;
+    }
+
+    // 今後拡張用：when が空なら無条件エイリアス扱い
+    if (Object.keys(when).length === 0) return name;
+  }
+
+  // 2) fallback: displayName
   if (typeof ent.displayName === "string" && ent.displayName.trim()) {
     return ent.displayName.trim();
   }
 
-  // 2) 新形式候補: displayName: ["海猫","ウミネコ"] みたいな配列
-  if (Array.isArray(ent.displayName) && ent.displayName.length) {
-    const names = ent.displayName.map((s) => String(s).trim()).filter(Boolean);
-    return names.length ? names.join(" / ") : id;
-  }
-
-  // 3) 新形式候補: names: { main: "...", aliases: ["..."] }
-  if (ent.names && typeof ent.names === "object") {
-    const main = typeof ent.names.main === "string" ? ent.names.main.trim() : "";
-    const aliases = Array.isArray(ent.names.aliases)
-      ? ent.names.aliases.map((s) => String(s).trim()).filter(Boolean)
-      : [];
-    if (main && aliases.length) return `${main} / ${aliases.join(" / ")}`;
-    if (main) return main;
-    if (aliases.length) return aliases.join(" / ");
-  }
-
-  // 4) 新形式候補: displayNames: ["..."] など
-  if (Array.isArray(ent.displayNames) && ent.displayNames.length) {
-    const names = ent.displayNames.map((s) => String(s).trim()).filter(Boolean);
-    return names.length ? names.join(" / ") : id;
-  }
-
+  // 3) さらに fallback: id
   return id;
 }
-
 
 /**
  * 粒子として表示するアイテム選択
@@ -435,7 +432,7 @@ export function createKolloidSketch(options = {}) {
       const openBtn = el.querySelector("#kolloid-panel-open");
 
       const title = it.title ?? "";
-      const contributorName = resolveDisplayName(contributorsMap, it);
+      const contributorName = resolveDisplayName(contributorsMap, it.contributor, it);
       const genre = it.genre ?? "—";
 
       if (titleEl) titleEl.textContent = title;
@@ -644,7 +641,7 @@ export function createKolloidSketch(options = {}) {
       if (!it) return;
 
       const title = it.title ?? "";
-      const contributorName = resolveDisplayName(contributorsMap, it.contributor);
+      const contributorName = resolveDisplayName(contributorsMap, it.contributor, it);
       const genre = it.genre ?? "";
 
       const line1 = `タイトル：${title}`;
