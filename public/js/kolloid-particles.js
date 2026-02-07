@@ -69,22 +69,45 @@ function matchesWhen(item, when) {
   return true;
 }
 
-function resolveDisplayName(contributorsMap, item) {
-  const id = (item?.contributor || "").trim();
-  if (!id) return "";
+// contributorsMap から表示名を解決（複数名にも対応）
+function resolveDisplayName(contributorsMap, contributorId) {
+  const id = (contributorId || "").trim();
+  if (!id) return contributorId || "";
 
-  const ent = contributorsMap?.[id];
-  if (!ent) return id;
+  const ent = contributorsMap && contributorsMap[id];
+  if (!ent) return id; // 未登録ならIDを返す（空欄にしない）
 
-  const aliases = Array.isArray(ent.aliases) ? ent.aliases : [];
-  for (const rule of aliases) {
-    if (rule?.name && matchesWhen(item, rule.when)) {
-      return rule.name;
-    }
+  // 1) 旧形式: displayName: "海猫"
+  if (typeof ent.displayName === "string" && ent.displayName.trim()) {
+    return ent.displayName.trim();
   }
 
-  return ent.displayName || id;
+  // 2) 新形式候補: displayName: ["海猫","ウミネコ"] みたいな配列
+  if (Array.isArray(ent.displayName) && ent.displayName.length) {
+    const names = ent.displayName.map((s) => String(s).trim()).filter(Boolean);
+    return names.length ? names.join(" / ") : id;
+  }
+
+  // 3) 新形式候補: names: { main: "...", aliases: ["..."] }
+  if (ent.names && typeof ent.names === "object") {
+    const main = typeof ent.names.main === "string" ? ent.names.main.trim() : "";
+    const aliases = Array.isArray(ent.names.aliases)
+      ? ent.names.aliases.map((s) => String(s).trim()).filter(Boolean)
+      : [];
+    if (main && aliases.length) return `${main} / ${aliases.join(" / ")}`;
+    if (main) return main;
+    if (aliases.length) return aliases.join(" / ");
+  }
+
+  // 4) 新形式候補: displayNames: ["..."] など
+  if (Array.isArray(ent.displayNames) && ent.displayNames.length) {
+    const names = ent.displayNames.map((s) => String(s).trim()).filter(Boolean);
+    return names.length ? names.join(" / ") : id;
+  }
+
+  return id;
 }
+
 
 /**
  * 粒子として表示するアイテム選択
