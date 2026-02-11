@@ -55,5 +55,15 @@
     "feed": [
       { "siteType": "blogger",   "genre": "自然", "url": "https://fe-tetsu-iron.blogspot.com/feeds/posts/default?alt=rss" }
     ]
+  },
+  "hitomitaro": {
+    "displayName": "人見太郎",
+    "genres":["文章","自然"],
+    "links": {
+      "note": "https://note.com/pure_kalmia2886"
+    },
+    "feed": [
+      { "siteType": "note",   "genre": "文章", "url": "https://note.com/pure_kalmia2886/rss" }
+    ]
   }
 }
